@@ -5,19 +5,7 @@ const jwt = require('jsonwebtoken');
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      role,
-      bio,
-      skills,
-      college,
-      location,
-      linkedIn,
-      github,
-      website
-    } = req.body;
+    const { name, email, password } = req.body; // Keep registration simple
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -30,14 +18,7 @@ exports.register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
-      bio,
-      skills,
-      college,
-      location,
-      linkedIn,
-      github,
-      website
+  
     });
 
     await user.save();
@@ -54,15 +35,8 @@ exports.register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        bio: user.bio,
-        skills: user.skills,
-        college: user.college,
-        location: user.location,
-        profileImage: user.profileImage,
-        linkedIn: user.linkedIn,
-        github: user.github,
-        website: user.website
+        hasCompletedOnboarding: user.hasCompletedOnboarding, // NEW: Needed for Gatekeeper
+        role: user.role
       }
     });
 
@@ -70,24 +44,22 @@ exports.register = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 // LOGIN
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Token
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
@@ -100,6 +72,7 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        hasCompletedOnboarding: user.hasCompletedOnboarding, // NEW: Needed for Gatekeeper
         role: user.role
       }
     });
@@ -110,14 +83,53 @@ exports.login = async (req, res) => {
   }
 };
 
+// GET ME (Used to verify session on refresh)
 exports.getMe = async (req, res) => {
   try {
-    const user = await require('../models/User')
-      .findById(req.user.userId)
-      .select('-password');
+    // req.user.userId comes from your auth middleware
+    const user = await User.findById(req.user.userId).select('-password');
+    
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json(user);
+    res.json(user); // This will naturally include hasCompletedOnboarding now
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.completeOnboarding = async (req, res) => {
+  try {
+    const { role, onboardingData, college, location, skills } = req.body;
+
+    console.log('Completing onboarding for user:', req.user.userId);
+    console.log('Received data:', { role, college, location, skills, onboardingData });
+
+    // Find user and update profile
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        role,
+        onboardingData,
+        college,
+        location,
+        skills,
+        hasCompletedOnboarding: true // ← THE KEY FLAG
+      },
+      { new: true } 
+    ).select('-password'); 
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log('User updated successfully:', updatedUser.email);
+
+    res.json({
+      message: "Protocol Secured. Welcome to the Network.",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Onboarding error:', error);
+    res.status(500).json({ message: 'Failed to complete protocol' });
   }
 };

@@ -20,17 +20,25 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'mentor', 'investor'],
-    default: 'student'
+    enum: ['Student', 'Mentor', 'Investor', null],
+    default: null
   },
   bio: {
     type: String,
     maxlength: 500
   },
   skills: {
-  type: [String],
-  default: []
-},
+    type: [String],
+    default: []
+  },
+  hasCompletedOnboarding: { 
+    type: Boolean, 
+    default: false 
+  },
+  onboardingData: {
+    type: Object, // Stores the onboard_daata
+    default: {}
+  },
   college: String,
   location: String,
   profileImage: {
