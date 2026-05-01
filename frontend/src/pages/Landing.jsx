@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Features from '../features/landing/sections/Features';
 import Progress from '../features/landing/sections/Progress';
 import UseCases from '../features/landing/sections/UseCases';
-import Faq from '../features/landing/sections/FAQ';
-import Cta from '../features/landing/sections/CTA';
+import FAQ from '../features/landing/sections/FAQ';
+import CTA from '../features/landing/sections/CTA';
 import { getLenis } from '../hooks/useLenis';
 import Hero from '../features/landing/sections/Hero';
 
@@ -31,8 +31,8 @@ const LandingPage = () => {
       <div className="relative z-20">
         <Progress scrollY={scrollY} />
         <UseCases scrollY={scrollY} />
-        <Faq scrollY={scrollY} />
-        <Cta scrollY={scrollY} />
+        <FAQ scrollY={scrollY} />
+        <CTA scrollY={scrollY} />
       </div>
       
     </div>
