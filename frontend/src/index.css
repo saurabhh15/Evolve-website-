@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Outfit:wght@100..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
+
+@import "tailwindcss";
+
+*{
+   font-family: "Outfit", sans-serif;
+}
+
+
+.shiny-path {
+  stroke-linecap: round;
+}
+
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+
+
+::-webkit-scrollbar-thumb {
+  background-color: #f97316; 
+
+  border-radius: 0px; 
+  
+  /* Smooth color transition */
+  transition: all 0.3s ease-in-out;
+}
+
+/* 4. The Hover State */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #000000; /* Turns black on hover */
+}
+
+/* 5. Fix for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 transparent; /* (Thumb color, Track color) */
+}
