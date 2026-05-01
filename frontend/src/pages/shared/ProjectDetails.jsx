@@ -28,7 +28,7 @@ const ProjectDetail = () => {
     const [editingComment, setEditingComment] = useState(null);
     const [editCommentInput, setEditCommentInput] = useState('');
     const [isAccepted, setIsAccepted] = useState(false);
-    const [appliedRoles, setAppliedRoles] = useState(new Set());  //project applications
+    const [appliedRoles, setAppliedRoles] = useState(new Set());  
     const [applications, setApplications] = useState([]);
     const [applicationsLoading, setApplicationsLoading] = useState(false);
 

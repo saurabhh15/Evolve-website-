@@ -20,7 +20,7 @@ const AuthCallback = () => {
 
                 // Fetch user data
                 try {
-                    const res = await axios.get('http://localhost:5000/api/auth/me');
+                    const res = await axios.get('https://evolve-website.onrender.com/api/auth/me');
                     setUser(res.data);
 
                     // Redirect based on onboarding status

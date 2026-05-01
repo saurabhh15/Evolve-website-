@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
         try {
           // Set default header for all future requests
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const res = await axios.get('http://localhost:5000/api/auth/me');
+          const res = await axios.get('https://evolve-website.onrender.com/api/auth/me');
           setUser(res.data);
         } catch (err) {
           localStorage.removeItem('token');
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   // 2. Login Function
   const login = async (email, password) => {
-    const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const res = await axios.post('https://evolve-website.onrender.com/api/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     setUser(res.data.user);

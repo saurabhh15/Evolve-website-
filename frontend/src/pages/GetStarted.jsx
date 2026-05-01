@@ -238,7 +238,7 @@ const GetStarted = () => {
 
             } else {
                 // ========== SIGNUP FLOW ==========
-                const res = await axios.post('http://localhost:5000/api/auth/register', {
+                const res = await axios.post('https://evolve-website.onrender.com/api/auth/register', {
                     name: fullName,
                     email: formData.email,
                     password: formData.password
@@ -283,8 +283,8 @@ const GetStarted = () => {
 
     const handleSocialAuth = (provider) => {
         const authUrls = {
-            Google: 'http://localhost:5000/api/auth/google',
-            GitHub: 'http://localhost:5000/api/auth/github'
+            Google: 'https://evolve-website.onrender.com/api/auth/google',
+            GitHub: 'https://evolve-website.onrender.com/api/auth/github'
         };
 
         // Redirect to backend OAuth route

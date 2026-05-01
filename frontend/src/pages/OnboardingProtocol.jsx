@@ -123,7 +123,7 @@ const Onboarding = () => {
       // console.log('Sending onboarding data:', payload);
 
       // Send to backend (token already in axios defaults from AuthContext)
-      const response = await axios.patch('http://localhost:5000/api/auth/onboarding', payload);
+      const response = await axios.patch('https://evolve-website.onrender.com/api/auth/onboarding', payload);
 
       // console.log('Backend response:', response.data);
 
