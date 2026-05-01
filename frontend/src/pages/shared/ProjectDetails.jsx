@@ -61,6 +61,8 @@ const ProjectDetail = () => {
                         .filter(a => a.project._id === id || a.project === id)
                         .map(a => a.role)
                 );
+
+
                 setAppliedRoles(appliedToThisProject);
                 setConnected(isPending && !isAccepted);
                 setIsAccepted(isAccepted);
@@ -77,6 +79,29 @@ const ProjectDetail = () => {
     }, [id]);
 
     useEffect(() => {
+        if (showRoleSelector) {
+            const scrollY = window.scrollY;
+
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+
+        } else {
+            const scrollY = document.body.style.top;
+
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+
+            window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
+    }, [showRoleSelector]);
+
+    useEffect(() => {
         if (activeSection !== 'Applications' || !isOwnProject) return;
         const load = async () => {
             setApplicationsLoading(true);
@@ -91,6 +116,8 @@ const ProjectDetail = () => {
         };
         load();
     }, [activeSection]);
+
+
 
     const handleApplicationStatus = async (applicationId, status) => {
         try {
@@ -207,6 +234,14 @@ const ProjectDetail = () => {
     );
 
     const isOwnProject = project.creator?._id === user?._id;
+
+    const applicableRoles = project.lookingFor?.filter(role => {
+        if (user?.role?.toLowerCase() === 'student') {
+            return role === 'co-founder' || role === 'team-member';
+        }
+        return true;
+    });
+
     const mentorComments = comments.filter(
         c => c.author?.role?.toLowerCase() === 'mentor'
     );
@@ -218,7 +253,7 @@ const ProjectDetail = () => {
     return (
         <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-orange-500 selection:text-black">
 
-            <div className="sticky top-4 z-110 px-6 pointer-events-none" style={{ marginBottom: '-48px' }}>
+            <div className="sticky top-4 z-25 px-6 pointer-events-none" style={{ marginBottom: '-48px' }}>
                 <button
                     onClick={() => navigate(-1)}
                     className="pointer-events-auto flex items-center gap-2 text-[15px] font-bold tracking-widest uppercase text-white/80 hover:text-[#e87315] transition-colors bg-black/40 backdrop-blur-md border border-white/[0.06] px-4 py-2.5 "
@@ -311,7 +346,7 @@ const ProjectDetail = () => {
             </header>
 
             {/* 2. STICKY NAV */}
-            <nav className="sticky top-0 z-[100] bg-black/80 backdrop-blur-md border-b border-white/[0.03] px-6 lg:px-12 py-4">
+            <nav className="sticky top-0 z-[20] bg-black/80 backdrop-blur-md border-b border-white/[0.03] px-6 lg:px-12 py-4">
                 <div className="max-w-7xl mx-30 flex justify-between items-center">
 
                     {/* ── Navigation Tabs ── */}
@@ -1193,64 +1228,117 @@ const ProjectDetail = () => {
 
             {showRoleSelector && (
                 <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#050505]/90 backdrop-blur-md"
                     onClick={() => setShowRoleSelector(false)}
                 >
+                    {/* Animated Background Element */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#e87315]/10 rounded-full blur-[120px]" />
+                    </div>
+
                     <div
-                        className="bg-[#101010] border border-white/[0.06] rounded-2xl p-6 max-w-sm w-full"
+                        className="relative bg-[#0a0a0a] border border-white/10 w-full max-w-md overflow-hidden shadow-2xl"
                         onClick={e => e.stopPropagation()}
                     >
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">
-                            Connect with Creator
-                        </h3>
-                        <p className="text-xs text-gray-500 mb-6">
-                            What role are you interested in?
-                        </p>
+                        {/* Structural Accents */}
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#e87315] to-transparent" />
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#e87315]" />
+                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#e87315]" />
 
-                        <div className="space-y-2 mb-6">
-                            {project.lookingFor?.length > 0 ? (
-                                <>
-                                    {project.lookingFor.map((role) => (
+                        <div className="p-8">
+                            <header className="mb-8">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-1 h-4 bg-[#e87315]" />
+                                    <h3 className="text-[11px] font-black text-white uppercase tracking-[0.4em]">
+                                        Connect with Creator
+                                    </h3>
+                                </div>
+                                <p className="text-[13px] text-white/40 font-medium italic">
+                                    What role are you interested in?
+                                </p>
+                            </header>
+
+                            <div className="space-y-3 mb-10">
+                                {applicableRoles?.length > 0 ? (
+                                    <>
+                                        {applicableRoles?.map((role) => (
+                                            <button
+                                                key={role}
+                                                onClick={() => setSelectedRole(role)}
+                                                className={`group relative w-full px-5 py-4 border transition-all duration-300 text-left overflow-hidden ${selectedRole === role
+                                                        ? 'border-[#e87315] bg-[#e87315]/5'
+                                                        : 'border-white/5 bg-white/[0.02] hover:border-white/20'
+                                                    }`}
+                                            >
+                                                <div className="relative z-10 flex items-center justify-between">
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === role ? 'text-[#e87315]' : 'text-white/60 group-hover:text-white'
+                                                        }`}>
+                                                        {role}
+                                                    </span>
+                                                    {selectedRole === role && (
+                                                        <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45 shadow-[0_0_10px_#e87315]" />
+                                                    )}
+                                                </div>
+                                                {selectedRole === role && (
+                                                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#e87315]" />
+                                                )}
+                                            </button>
+                                        ))}
+
                                         <button
-                                            key={role}
-                                            onClick={() => setSelectedRole(role)}
-                                            className={`w-full px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all text-left ${selectedRole === role
-                                                ? 'bg-[#e87315] border-[#e87315] text-black'
-                                                : 'bg-transparent border-white/[0.08] text-gray-400 hover:border-white/20 hover:text-white'
+                                            onClick={() => setSelectedRole('')}
+                                            className={`group relative w-full px-5 py-4 border transition-all duration-300 text-left ${selectedRole === ''
+                                                    ? 'border-[#e87315] bg-[#e87315]/5'
+                                                    : 'border-white/5 bg-white/[0.02] hover:border-white/20'
                                                 }`}
                                         >
-                                            {role}
+                                            <div className="relative z-10 flex items-center justify-between">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest ${selectedRole === '' ? 'text-[#e87315]' : 'text-white/60 group-hover:text-white'
+                                                    }`}>
+                                                    General Connection
+                                                </span>
+                                                {selectedRole === '' && (
+                                                    <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45 shadow-[0_0_10px_#e87315]" />
+                                                )}
+                                            </div>
+                                            {selectedRole === '' && (
+                                                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#e87315]" />
+                                            )}
                                         </button>
-                                    ))}
-                                    <button
-                                        onClick={() => setSelectedRole('')}
-                                        className={`w-full px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all text-left ${selectedRole === ''
-                                            ? 'bg-[#e87315] border-[#e87315] text-black'
-                                            : 'bg-transparent border-white/[0.08] text-gray-400 hover:border-white/20 hover:text-white'
-                                            }`}
-                                    >
-                                        General Connection
-                                    </button>
-                                </>
-                            ) : (
-                                <p className="text-xs text-gray-600 italic">No specific roles listed</p>
-                            )}
+                                    </>
+                                ) : (
+                                    <div className="py-8 text-center border border-dashed border-white/10">
+                                        <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">
+                                            No specific roles listed
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <button
+                                    onClick={() => setShowRoleSelector(false)}
+                                    className="order-2 sm:order-1 flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:text-white border border-white/5 hover:bg-white/5 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConnect}
+                                    disabled={connecting}
+                                    className="order-1 sm:order-2 flex-[1.5] py-4 bg-white text-black hover:bg-[#e87315] hover:text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all relative group"
+                                >
+                                    <span className="relative z-10">
+                                        {connecting ? 'Applying...' : 'Submit Application'}
+                                    </span>
+                                    <div className="absolute bottom-0 right-0 w-0 h-0 border-style-solid border-t-[8px] border-t-transparent border-r-[8px] border-r-black/20" />
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowRoleSelector(false)}
-                                className="flex-1 py-3 rounded-xl border border-white/[0.06] text-gray-400 hover:text-white font-bold text-xs transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleConnect}
-                                disabled={connecting}
-                                className="flex-1 py-3 rounded-xl bg-white hover:bg-[#e87315] text-black hover:text-white font-black text-xs uppercase tracking-widest transition-all"
-                            >
-                                {connecting ? 'Applying...' : 'Submit Application'}
-                            </button>
+                        {/* Bottom corner detail */}
+                        <div className="absolute bottom-0 right-0 w-8 h-8 opacity-10">
+                            <div className="absolute bottom-2 right-2 w-4 h-[1px] bg-white rotate-45" />
+                            <div className="absolute bottom-2 right-2 w-1 h-4 bg-white" />
                         </div>
                     </div>
                 </div>
