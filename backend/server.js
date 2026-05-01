@@ -11,27 +11,32 @@ const Message = require('./models/Message');
 const app = express();
 const server = http.createServer(app);
 
+// ── CORS Configuration ──
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'https://evolve-website-wheat.vercel.app' 
+  ],
+  credentials: true
+};
+
 const io = new Server(server, {
-  cors: {
-    origin: 'http://localhost:5174',
-    credentials: true
-  }
+  cors: corsOptions
 });
 
-// Middleware
-app.use(cors({
-  origin: 'http://localhost:5174',
-  credentials: true
-}));
+// ── Middleware ──
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(passport.initialize());
 
-// DB connection
+// ── DB connection ──
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log(err));
 
-// Routes
+// ── Routes ──
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/projects', require('./routes/projects'));
