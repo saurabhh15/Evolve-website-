@@ -11,8 +11,8 @@ exports.sendConnectionRequest = async (req, res) => {
 
     // Validation
     if (!to || !type) {
-      return res.status(400).json({ 
-        message: 'Recipient (to) and connection type are required' 
+      return res.status(400).json({
+        message: 'Recipient (to) and connection type are required'
       });
     }
 
@@ -25,15 +25,24 @@ exports.sendConnectionRequest = async (req, res) => {
     const existingConnection = await Connection.findOne({
       from: req.user.userId,
       to,
-      type
+      type,
+      status: { $in: ['pending', 'accepted'] }
     });
 
     if (existingConnection) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Connection request already sent',
         status: existingConnection.status
       });
     }
+
+    // Delete any existing rejected connection before creating new one
+    await Connection.deleteOne({
+      from: req.user.userId,
+      to,
+      type,
+      status: 'rejected'
+    });
 
     // Create new connection
     const connection = new Connection({
@@ -45,7 +54,7 @@ exports.sendConnectionRequest = async (req, res) => {
     });
 
     await connection.save();
-    
+
     // Populate user details before sending response
     await connection.populate('from to', 'name role profileImage');
     if (projectId) {
@@ -56,7 +65,7 @@ exports.sendConnectionRequest = async (req, res) => {
 
   } catch (error) {
     console.error('Send connection error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error sending connection request',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -71,7 +80,7 @@ exports.sendConnectionRequest = async (req, res) => {
 exports.getMyConnections = async (req, res) => {
   try {
     const { status, type } = req.query;
-    
+
     // Base query - get connections where user is sender or receiver
     let query = {
       $or: [
@@ -79,12 +88,12 @@ exports.getMyConnections = async (req, res) => {
         { to: req.user.userId }
       ]
     };
-    
+
     // Filter by status if provided
     if (status) {
       query.status = status;
     }
-    
+
     // Filter by type if provided
     if (type) {
       query.type = type;
@@ -160,8 +169,8 @@ exports.updateConnectionStatus = async (req, res) => {
 
     // Validate status
     if (!status || !['accepted', 'rejected'].includes(status)) {
-      return res.status(400).json({ 
-        message: 'Status must be either "accepted" or "rejected"' 
+      return res.status(400).json({
+        message: 'Status must be either "accepted" or "rejected"'
       });
     }
 
@@ -173,21 +182,21 @@ exports.updateConnectionStatus = async (req, res) => {
 
     // Only the receiver can accept/reject
     if (connection.to.toString() !== req.user.userId) {
-      return res.status(403).json({ 
-        message: 'Not authorized. Only the receiver can update this request.' 
+      return res.status(403).json({
+        message: 'Not authorized. Only the receiver can update this request.'
       });
     }
 
     // Check if already processed
     if (connection.status !== 'pending') {
-      return res.status(400).json({ 
-        message: `Request already ${connection.status}` 
+      return res.status(400).json({
+        message: `Request already ${connection.status}`
       });
     }
 
     connection.status = status;
     await connection.save();
-    
+
     // Populate before sending response
     await connection.populate('from to', 'name role profileImage');
 
@@ -214,8 +223,8 @@ exports.deleteConnection = async (req, res) => {
 
     // Only the sender can delete their request
     if (connection.from.toString() !== req.user.userId) {
-      return res.status(403).json({ 
-        message: 'Not authorized. Only the sender can delete this request.' 
+      return res.status(403).json({
+        message: 'Not authorized. Only the sender can delete this request.'
       });
     }
 
@@ -234,6 +243,11 @@ exports.deleteConnection = async (req, res) => {
  * @route   GET /api/connections/network
  * @access  Private
  */
+/**
+ * @desc    Get accepted connections (your network)
+ * @route   GET /api/connections/network
+ * @access  Private
+ */
 exports.getNetwork = async (req, res) => {
   try {
     const connections = await Connection.find({
@@ -247,12 +261,21 @@ exports.getNetwork = async (req, res) => {
       .populate('to', 'name role profileImage college skills')
       .sort({ updatedAt: -1 });
 
-    // Transform to get just the connected users
-    const network = connections.map(conn => {
-      // Return the other person (not current user)
-      return conn.from._id.toString() === req.user.userId 
-        ? conn.to 
+    // Transform to get just the connected users (deduplicated)
+    const seenIds = new Set();
+    const network = [];
+
+    connections.forEach(conn => {
+      // Get the other person (not current user)
+      const otherUser = conn.from._id.toString() === req.user.userId
+        ? conn.to
         : conn.from;
+
+      // Only add if we haven't seen this user before
+      if (!seenIds.has(otherUser._id.toString())) {
+        seenIds.add(otherUser._id.toString());
+        network.push(otherUser);
+      }
     });
 
     res.json(network);

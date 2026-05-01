@@ -25,6 +25,10 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/projects', require('./routes/projects'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/connections', require('./routes/connections'));
+app.use('/api/projects/:id/comments', require('./routes/comments'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/learning-goals', require('./routes/learningGoals'));
+app.use('/api/notes', require('./routes/notes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

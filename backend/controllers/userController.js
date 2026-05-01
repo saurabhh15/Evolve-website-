@@ -36,7 +36,7 @@ exports.updateProfile = async (req, res) => {
     // Fields that can be updated
     const allowedUpdates = [
       'name', 'bio', 'skills', 'college', 'location', 
-      'profileImage', 'linkedIn', 'github', 'website'
+      'profileImage', 'linkedIn', 'github', 'website','coverImage'
     ];
     
     // Filter out fields that shouldn't be updated

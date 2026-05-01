@@ -13,14 +13,14 @@ exports.createProject = async (req, res) => {
     });
 
     await project.save();
-    
+
     // Populate creator info before sending response
     await project.populate('creator', 'name role college');
-    
+
     res.status(201).json(project);
   } catch (error) {
     console.error('Create project error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Error creating project',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -54,30 +54,30 @@ exports.getAllProjects = async (req, res) => {
 exports.searchProjects = async (req, res) => {
   try {
     const { category, stage, search, lookingFor, tags } = req.query;
-    
+
     let query = {};
-    
+
     // Filter by category
     if (category) {
       query.category = category;
     }
-    
+
     // Filter by stage
     if (stage) {
       query.stage = stage;
     }
-    
+
     // Filter by what they're looking for
     if (lookingFor) {
       query.lookingFor = { $in: [lookingFor] };
     }
-    
+
     // Filter by tags
     if (tags) {
       const tagArray = tags.split(',');
       query.tags = { $in: tagArray };
     }
-    
+
     // Text search in title, description, and tags
     if (search) {
       query.$or = [
@@ -87,12 +87,12 @@ exports.searchProjects = async (req, res) => {
         { tags: { $in: [new RegExp(search, 'i')] } }
       ];
     }
-    
+
     const projects = await Project.find(query)
       .populate('creator', 'name role college profileImage')
       .sort({ createdAt: -1 })
       .limit(100);
-    
+
     res.json(projects);
   } catch (error) {
     console.error('Search projects error:', error);
@@ -110,7 +110,7 @@ exports.getProjectById = async (req, res) => {
     // Increment view count and return updated project
     const project = await Project.findByIdAndUpdate(
       req.params.id,
-      { $inc: { viewCount: 1 } },
+      { $inc: { viewCount: 1, weeklyViews: 1 } },
       { new: true }
     )
       .populate('creator', 'name role college profileImage bio linkedIn github')
@@ -123,12 +123,12 @@ exports.getProjectById = async (req, res) => {
     res.json(project);
   } catch (error) {
     console.error('Get project error:', error);
-    
+
     // Handle invalid MongoDB ObjectId
     if (error.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Project not found' });
     }
-    
+
     res.status(500).json({ message: 'Error fetching project' });
   }
 };
@@ -156,7 +156,7 @@ exports.updateProject = async (req, res) => {
       'title', 'tagline', 'description', 'category', 'stage',
       'teamSize', 'lookingFor', 'tags', 'demoUrl', 'githubUrl', 'images'
     ];
-    
+
     // Apply updates
     Object.keys(req.body).forEach(key => {
       if (allowedUpdates.includes(key)) {
@@ -165,8 +165,8 @@ exports.updateProject = async (req, res) => {
     });
 
     await project.save();
-    
-    // Populate before sending
+
+
     await project.populate('creator', 'name role college');
 
     res.json(project);
@@ -211,30 +211,30 @@ exports.deleteProject = async (req, res) => {
 exports.toggleLike = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
-    
+
     const userId = req.user.userId;
     const likeIndex = project.likes.findIndex(id => id.toString() === userId);
-    
+
     let isLiked;
-    
+
     if (likeIndex > -1) {
-      // Unlike - remove user from likes array
       project.likes.splice(likeIndex, 1);
+      project.weeklyLikes = Math.max((project.weeklyLikes || 0) - 1, 0);
       isLiked = false;
     } else {
-      // Like - add user to likes array
       project.likes.push(userId);
+      project.weeklyLikes = (project.weeklyLikes || 0) + 1;
       isLiked = true;
     }
-    
+
     await project.save();
-    
-    res.json({ 
-      likes: project.likes.length, 
+
+    res.json({
+      likes: project.likes.length,
       isLiked,
       message: isLiked ? 'Project liked' : 'Project unliked'
     });
@@ -253,7 +253,7 @@ exports.getMyProjects = async (req, res) => {
   try {
     const projects = await Project.find({ creator: req.user.userId })
       .sort({ createdAt: -1 });
-    
+
     res.json(projects);
   } catch (error) {
     console.error('Get my projects error:', error);
@@ -269,32 +269,32 @@ exports.getMyProjects = async (req, res) => {
 exports.addTeamMember = async (req, res) => {
   try {
     const { userId } = req.body;
-    
+
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
     }
-    
+
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
-    
+
     // Check if user is the creator
     if (project.creator.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    
+
     // Check if user is already a team member
     if (project.teamMembers.includes(userId)) {
       return res.status(400).json({ message: 'User is already a team member' });
     }
-    
+
     project.teamMembers.push(userId);
     await project.save();
-    
+
     await project.populate('teamMembers', 'name role profileImage');
-    
+
     res.json(project);
   } catch (error) {
     console.error('Add team member error:', error);
@@ -310,23 +310,23 @@ exports.addTeamMember = async (req, res) => {
 exports.removeTeamMember = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    
+
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
-    
+
     // Check if user is the creator
     if (project.creator.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    
+
     // Remove team member
     project.teamMembers = project.teamMembers.filter(
       id => id.toString() !== req.params.userId
     );
-    
+
     await project.save();
-    
+
     res.json({ message: 'Team member removed successfully' });
   } catch (error) {
     console.error('Remove team member error:', error);

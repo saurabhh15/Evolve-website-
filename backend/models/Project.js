@@ -32,7 +32,7 @@ const projectSchema = new mongoose.Schema({
   },
   lookingFor: [{
     type: String,
-    enum: ['mentor', 'co-founder', 'investor', 'feedback']
+    enum: ['mentor', 'co-founder', 'investor', 'feedback','team-member']
   }],
   tags: [String],
   demoUrl: String,
@@ -52,6 +52,14 @@ const projectSchema = new mongoose.Schema({
     ref: 'User'
   }],
   viewCount: {
+    type: Number,
+    default: 0
+  },
+  weeklyViews: {
+    type: Number,
+    default: 0
+  },
+  weeklyLikes: {
     type: Number,
     default: 0
   }
