@@ -5,7 +5,7 @@ const Connection = require('../models/Connection');
  * @route   POST /api/connections
  * @access  Private
  */
-exports.sendConnectionRequest = async (req, res) => {
+exports.sendConnectionRequest = async (req, res, next) => {
   try {
     const { to, type, projectId, message } = req.body;
 
@@ -64,11 +64,7 @@ exports.sendConnectionRequest = async (req, res) => {
     res.status(201).json(connection);
 
   } catch (error) {
-    console.error('Send connection error:', error);
-    res.status(500).json({
-      message: 'Error sending connection request',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    next(error);
   }
 };
 
@@ -77,7 +73,7 @@ exports.sendConnectionRequest = async (req, res) => {
  * @route   GET /api/connections?status=pending&type=mentor-request
  * @access  Private
  */
-exports.getMyConnections = async (req, res) => {
+exports.getMyConnections = async (req, res, next) => {
   try {
     const { status, type } = req.query;
 
@@ -108,8 +104,7 @@ exports.getMyConnections = async (req, res) => {
     res.json(connections);
 
   } catch (error) {
-    console.error('Get connections error:', error);
-    res.status(500).json({ message: 'Error fetching connections' });
+    next(error);
   }
 };
 
@@ -118,7 +113,7 @@ exports.getMyConnections = async (req, res) => {
  * @route   GET /api/connections/received
  * @access  Private
  */
-exports.getReceivedRequests = async (req, res) => {
+exports.getReceivedRequests = async (req, res, next) => {
   try {
     const connections = await Connection.find({
       to: req.user.userId,
@@ -131,8 +126,7 @@ exports.getReceivedRequests = async (req, res) => {
     res.json(connections);
 
   } catch (error) {
-    console.error('Get received requests error:', error);
-    res.status(500).json({ message: 'Error fetching received requests' });
+    next(error);
   }
 };
 
@@ -141,7 +135,7 @@ exports.getReceivedRequests = async (req, res) => {
  * @route   GET /api/connections/sent
  * @access  Private
  */
-exports.getSentRequests = async (req, res) => {
+exports.getSentRequests = async (req, res, next) => {
   try {
     const connections = await Connection.find({
       from: req.user.userId
@@ -153,8 +147,7 @@ exports.getSentRequests = async (req, res) => {
     res.json(connections);
 
   } catch (error) {
-    console.error('Get sent requests error:', error);
-    res.status(500).json({ message: 'Error fetching sent requests' });
+    next(error);
   }
 };
 
@@ -163,7 +156,7 @@ exports.getSentRequests = async (req, res) => {
  * @route   PUT /api/connections/:id
  * @access  Private (Only receiver can update)
  */
-exports.updateConnectionStatus = async (req, res) => {
+exports.updateConnectionStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
 
@@ -203,8 +196,7 @@ exports.updateConnectionStatus = async (req, res) => {
     res.json(connection);
 
   } catch (error) {
-    console.error('Update connection error:', error);
-    res.status(500).json({ message: 'Error updating connection status' });
+    next(error);
   }
 };
 
@@ -213,7 +205,7 @@ exports.updateConnectionStatus = async (req, res) => {
  * @route   DELETE /api/connections/:id
  * @access  Private (Only sender can delete)
  */
-exports.deleteConnection = async (req, res) => {
+exports.deleteConnection = async (req, res, next) => {
   try {
     const connection = await Connection.findById(req.params.id);
 
@@ -233,8 +225,7 @@ exports.deleteConnection = async (req, res) => {
     res.json({ message: 'Connection request deleted successfully' });
 
   } catch (error) {
-    console.error('Delete connection error:', error);
-    res.status(500).json({ message: 'Error deleting connection' });
+    next(error);
   }
 };
 
@@ -243,12 +234,7 @@ exports.deleteConnection = async (req, res) => {
  * @route   GET /api/connections/network
  * @access  Private
  */
-/**
- * @desc    Get accepted connections (your network)
- * @route   GET /api/connections/network
- * @access  Private
- */
-exports.getNetwork = async (req, res) => {
+exports.getNetwork = async (req, res, next) => {
   try {
     const connections = await Connection.find({
       $or: [
@@ -281,7 +267,6 @@ exports.getNetwork = async (req, res) => {
     res.json(network);
 
   } catch (error) {
-    console.error('Get network error:', error);
-    res.status(500).json({ message: 'Error fetching network' });
+    next(error);
   }
 };

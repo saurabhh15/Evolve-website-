@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 
 
 // POST /api/projects/:id/apply
-exports.apply = async (req, res) => {
+exports.apply = async (req, res, next) => {
     try {
         const { role, message } = req.body;
         const projectId = req.params.id;
@@ -59,14 +59,13 @@ exports.apply = async (req, res) => {
 
         res.status(201).json(application);
 
-    } catch (err) {
-        console.error('Apply error:', err);
-        res.status(500).json({ message: 'Error submitting application' });
+    } catch (error) {
+        next(error);
     }
 };
 
 // GET /api/projects/:id/applications
-exports.getApplications = async (req, res) => {
+exports.getApplications = async (req, res, next) => {
     try {
         const project = await Project.findById(req.params.id);
         if (!project) {
@@ -84,14 +83,13 @@ exports.getApplications = async (req, res) => {
 
         res.json(applications);
 
-    } catch (err) {
-        console.error('Get applications error:', err);
-        res.status(500).json({ message: 'Error fetching applications' });
+    } catch (error) {
+        next(error);
     }
 };
 
 // GET /api/applications/my — check own applications
-exports.getMyApplications = async (req, res) => {
+exports.getMyApplications = async (req, res, next) => {
     try {
         const applications = await Application.find({ applicant: req.user.userId })
             .populate('project', 'title')
@@ -99,14 +97,13 @@ exports.getMyApplications = async (req, res) => {
 
         res.json(applications);
 
-    } catch (err) {
-        console.error('Get my applications error:', err);
-        res.status(500).json({ message: 'Error fetching applications' });
+    } catch (error) {
+        next(error);
     }
 };
 
 // PUT /api/applications/:id
-exports.updateStatus = async (req, res) => {
+exports.updateStatus = async (req, res, next) => {
     try {
         const { status } = req.body;
 
@@ -146,7 +143,7 @@ exports.updateStatus = async (req, res) => {
 
         await application.save();
 
-        // ── Create notification for applicant ──
+        // Create notification for applicant
         await Notification.create({
             recipient: application.applicant._id,
             sender: req.user.userId,
@@ -159,8 +156,7 @@ exports.updateStatus = async (req, res) => {
 
         res.json(application);
 
-    } catch (err) {
-        console.error('Update application error:', err);
-        res.status(500).json({ message: 'Error updating application' });
+    } catch (error) {
+        next(error);
     }
 };

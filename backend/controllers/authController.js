@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // REGISTER
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body; // Keep registration simple
 
@@ -41,12 +41,12 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
 // LOGIN
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -78,13 +78,12 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
 // GET ME (Used to verify session on refresh)
-exports.getMe = async (req, res) => {
+exports.getMe = async (req, res, next) => {
   try {
     // req.user.userId comes from your auth middleware
     const user = await User.findById(req.user.userId).select('-password');
@@ -92,12 +91,12 @@ exports.getMe = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json(user); // This will naturally include hasCompletedOnboarding now
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+  } catch (error) {
+    next(error);
   }
 };
 
-exports.completeOnboarding = async (req, res) => {
+exports.completeOnboarding = async (req, res, next) => {
   try {
     const { role, onboardingData, college, location, skills } = req.body;
 
@@ -129,7 +128,6 @@ exports.completeOnboarding = async (req, res) => {
       user: updatedUser
     });
   } catch (error) {
-    console.error('Onboarding error:', error);
-    res.status(500).json({ message: 'Failed to complete protocol' });
+    next(error);
   }
 };

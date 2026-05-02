@@ -1,6 +1,6 @@
 const Note = require('../models/Note');
 
-exports.getNotes = async (req, res) => {
+exports.getNotes = async (req, res, next) => {
   try {
     const notes = await Note.find({
       mentor: req.user.userId,
@@ -8,11 +8,11 @@ exports.getNotes = async (req, res) => {
     }).sort({ createdAt: -1 });
     res.json(notes);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching notes' });
+    next(error);
   }
 };
 
-exports.addNote = async (req, res) => {
+exports.addNote = async (req, res, next) => {
   try {
     const { content } = req.body;
     if (!content?.trim()) {
@@ -26,11 +26,11 @@ exports.addNote = async (req, res) => {
     await note.save();
     res.status(201).json(note);
   } catch (error) {
-    res.status(500).json({ message: 'Error adding note' });
+    next(error);
   }
 };
 
-exports.editNote = async (req, res) => {
+exports.editNote = async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ message: 'Note not found' });
@@ -41,11 +41,11 @@ exports.editNote = async (req, res) => {
     await note.save();
     res.json(note);
   } catch (error) {
-    res.status(500).json({ message: 'Error editing note' });
+    next(error);
   }
 };
 
-exports.deleteNote = async (req, res) => {
+exports.deleteNote = async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ message: 'Note not found' });
@@ -55,6 +55,6 @@ exports.deleteNote = async (req, res) => {
     await note.deleteOne();
     res.json({ message: 'Note deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting note' });
+    next(error);
   }
 };

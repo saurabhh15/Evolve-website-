@@ -5,7 +5,7 @@ const Notification = require('../models/Notification');
  * @route   GET /api/notifications
  * @access  Private
  */
-exports.getNotifications = async (req, res) => {
+exports.getNotifications = async (req, res, next) => {
   try {
     const notifications = await Notification.find({ recipient: req.user.userId })
       .populate('sender', 'name role profileImage')
@@ -16,8 +16,7 @@ exports.getNotifications = async (req, res) => {
 
     res.json(notifications);
   } catch (error) {
-    console.error('Get notifications error:', error);
-    res.status(500).json({ message: 'Error fetching notifications' });
+    next(error);
   }
 };
 
@@ -26,7 +25,7 @@ exports.getNotifications = async (req, res) => {
  * @route   PUT /api/notifications/:id/read
  * @access  Private
  */
-exports.markAsRead = async (req, res) => {
+exports.markAsRead = async (req, res, next) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -43,8 +42,7 @@ exports.markAsRead = async (req, res) => {
 
     res.json(notification);
   } catch (error) {
-    console.error('Mark as read error:', error);
-    res.status(500).json({ message: 'Error marking notification as read' });
+    next(error);
   }
 };
 
@@ -53,7 +51,7 @@ exports.markAsRead = async (req, res) => {
  * @route   PUT /api/notifications/read-all
  * @access  Private
  */
-exports.markAllAsRead = async (req, res) => {
+exports.markAllAsRead = async (req, res, next) => {
   try {
     await Notification.updateMany(
       { recipient: req.user.userId, read: false },
@@ -62,8 +60,7 @@ exports.markAllAsRead = async (req, res) => {
 
     res.json({ message: 'All notifications marked as read' });
   } catch (error) {
-    console.error('Mark all as read error:', error);
-    res.status(500).json({ message: 'Error marking all notifications as read' });
+    next(error);
   }
 };
 
@@ -72,7 +69,7 @@ exports.markAllAsRead = async (req, res) => {
  * @route   DELETE /api/notifications/:id
  * @access  Private
  */
-exports.deleteNotification = async (req, res) => {
+exports.deleteNotification = async (req, res, next) => {
   try {
     const notification = await Notification.findById(req.params.id);
 
@@ -88,7 +85,6 @@ exports.deleteNotification = async (req, res) => {
 
     res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    console.error('Delete notification error:', error);
-    res.status(500).json({ message: 'Error deleting notification' });
+    next(error);
   }
 };

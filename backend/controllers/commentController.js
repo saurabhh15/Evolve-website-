@@ -7,7 +7,7 @@ const Notification = require('../models/Notification');
  * @route   GET /api/projects/:id/comments
  * @access  Public
  */
-exports.getComments = async (req, res) => {
+exports.getComments = async (req, res, next) => {
   try {
     const comments = await Comment.find({ project: req.params.id })
       .populate('author', 'name role profileImage college')
@@ -15,8 +15,7 @@ exports.getComments = async (req, res) => {
 
     res.json(comments);
   } catch (error) {
-    console.error('Get comments error:', error);
-    res.status(500).json({ message: 'Error fetching comments' });
+    next(error);
   }
 };
 
@@ -25,7 +24,7 @@ exports.getComments = async (req, res) => {
  * @route   POST /api/projects/:id/comments
  * @access  Private
  */
-exports.addComment = async (req, res) => {
+exports.addComment = async (req, res, next) => {
   try {
     const { content } = req.body;
 
@@ -62,8 +61,7 @@ exports.addComment = async (req, res) => {
 
     res.status(201).json(comment);
   } catch (error) {
-    console.error('Add comment error:', error);
-    res.status(500).json({ message: 'Error adding comment' });
+    next(error);
   }
 };
 
@@ -72,7 +70,7 @@ exports.addComment = async (req, res) => {
  * @route   PUT /api/comments/:commentId
  * @access  Private (Only comment author)
  */
-exports.editComment = async (req, res) => {
+exports.editComment = async (req, res, next) => {
   try {
     const { content } = req.body;
 
@@ -98,8 +96,7 @@ exports.editComment = async (req, res) => {
 
     res.json(comment);
   } catch (error) {
-    console.error('Edit comment error:', error);
-    res.status(500).json({ message: 'Error editing comment' });
+    next(error);
   }
 };
 
@@ -108,7 +105,7 @@ exports.editComment = async (req, res) => {
  * @route   DELETE /api/comments/:commentId
  * @access  Private (Comment author or project owner)
  */
-exports.deleteComment = async (req, res) => {
+exports.deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.commentId)
       .populate('project', 'creator');
@@ -134,7 +131,6 @@ exports.deleteComment = async (req, res) => {
 
     res.json({ message: 'Comment deleted successfully' });
   } catch (error) {
-    console.error('Delete comment error:', error);
-    res.status(500).json({ message: 'Error deleting comment' });
+    next(error);
   }
 };

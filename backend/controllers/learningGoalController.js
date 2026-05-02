@@ -1,7 +1,7 @@
 const LearningGoal = require('../models/LearningGoal');
 const Project = require('../models/Project');
 
-exports.getGoals = async (req, res) => {
+exports.getGoals = async (req, res, next) => {
   try {
     const goals = await LearningGoal.find({ user: req.user.userId });
     
@@ -27,12 +27,11 @@ exports.getGoals = async (req, res) => {
     
     res.json(goalsWithProgress);
   } catch (error) {
-    console.error('Get goals error:', error);
-    res.status(500).json({ message: 'Error fetching goals' });
+    next(error);
   }
 };
 
-exports.addGoal = async (req, res) => {
+exports.addGoal = async (req, res, next) => {
   try {
     const { skill, target } = req.body;
     
@@ -74,12 +73,11 @@ exports.addGoal = async (req, res) => {
       createdAt: goal.createdAt
     });
   } catch (error) {
-    console.error('Add goal error:', error);
-    res.status(500).json({ message: 'Error adding goal' });
+    next(error);
   }
 };
 
-exports.deleteGoal = async (req, res) => {
+exports.deleteGoal = async (req, res, next) => {
   try {
     const goal = await LearningGoal.findById(req.params.id);
 
@@ -94,7 +92,6 @@ exports.deleteGoal = async (req, res) => {
     await goal.deleteOne();
     res.json({ message: 'Goal deleted successfully' });
   } catch (error) {
-    console.error('Delete goal error:', error);
-    res.status(500).json({ message: 'Error deleting goal' });
+    next(error);
   }
 };

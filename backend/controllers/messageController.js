@@ -5,7 +5,7 @@ const Message = require('../models/Message');
  * @route   POST /api/messages
  * @access  Private
  */
-exports.sendMessage = async (req, res) => {
+exports.sendMessage = async (req, res, next) => {
   try {
     const { recipient, content } = req.body;
 
@@ -41,11 +41,7 @@ exports.sendMessage = async (req, res) => {
     res.status(201).json(message);
 
   } catch (error) {
-    console.error('Send message error:', error);
-    res.status(500).json({ 
-      message: 'Error sending message',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    next(error);
   }
 };
 
@@ -54,7 +50,7 @@ exports.sendMessage = async (req, res) => {
  * @route   GET /api/messages/conversation/:userId
  * @access  Private
  */
-exports.getConversation = async (req, res) => {
+exports.getConversation = async (req, res, next) => {
   try {
     const otherUserId = req.params.userId;
 
@@ -81,8 +77,7 @@ exports.getConversation = async (req, res) => {
     res.json(messages);
 
   } catch (error) {
-    console.error('Get conversation error:', error);
-    res.status(500).json({ message: 'Error fetching conversation' });
+    next(error);
   }
 };
 
@@ -91,7 +86,7 @@ exports.getConversation = async (req, res) => {
  * @route   GET /api/messages/conversations
  * @access  Private
  */
-exports.getAllConversations = async (req, res) => {
+exports.getAllConversations = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
@@ -138,8 +133,7 @@ exports.getAllConversations = async (req, res) => {
     res.json(conversations);
 
   } catch (error) {
-    console.error('Get conversations error:', error);
-    res.status(500).json({ message: 'Error fetching conversations' });
+    next(error);
   }
 };
 
@@ -148,7 +142,7 @@ exports.getAllConversations = async (req, res) => {
  * @route   PUT /api/messages/:id/read
  * @access  Private (Only recipient)
  */
-exports.markAsRead = async (req, res) => {
+exports.markAsRead = async (req, res, next) => {
   try {
     const message = await Message.findById(req.params.id);
 
@@ -169,8 +163,7 @@ exports.markAsRead = async (req, res) => {
     res.json(message);
 
   } catch (error) {
-    console.error('Mark as read error:', error);
-    res.status(500).json({ message: 'Error updating message' });
+    next(error);
   }
 };
 
@@ -179,7 +172,7 @@ exports.markAsRead = async (req, res) => {
  * @route   PUT /api/messages/conversation/:userId/read
  * @access  Private
  */
-exports.markConversationAsRead = async (req, res) => {
+exports.markConversationAsRead = async (req, res, next) => {
   try {
     const otherUserId = req.params.userId;
 
@@ -198,8 +191,7 @@ exports.markConversationAsRead = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Mark conversation as read error:', error);
-    res.status(500).json({ message: 'Error marking conversation as read' });
+    next(error);
   }
 };
 
@@ -208,7 +200,7 @@ exports.markConversationAsRead = async (req, res) => {
  * @route   DELETE /api/messages/:id
  * @access  Private (Only sender)
  */
-exports.deleteMessage = async (req, res) => {
+exports.deleteMessage = async (req, res, next) => {
   try {
     const message = await Message.findById(req.params.id);
 
@@ -228,8 +220,7 @@ exports.deleteMessage = async (req, res) => {
     res.json({ message: 'Message deleted successfully' });
 
   } catch (error) {
-    console.error('Delete message error:', error);
-    res.status(500).json({ message: 'Error deleting message' });
+    next(error);
   }
 };
 
@@ -238,7 +229,7 @@ exports.deleteMessage = async (req, res) => {
  * @route   GET /api/messages/unread-count
  * @access  Private
  */
-exports.getUnreadCount = async (req, res) => {
+exports.getUnreadCount = async (req, res, next) => {
   try {
     const count = await Message.countDocuments({
       recipient: req.user.userId,
@@ -248,7 +239,6 @@ exports.getUnreadCount = async (req, res) => {
     res.json({ unreadCount: count });
 
   } catch (error) {
-    console.error('Get unread count error:', error);
-    res.status(500).json({ message: 'Error fetching unread count' });
+    next(error);
   }
 };

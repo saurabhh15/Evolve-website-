@@ -5,7 +5,7 @@ const User = require('../models/User');
  * @route   GET /api/users/:id
  * @access  Public
  */
-exports.getUserById = async (req, res) => {
+exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     
@@ -15,14 +15,10 @@ exports.getUserById = async (req, res) => {
     
     res.json(user);
   } catch (error) {
-    console.error('Get user error:', error);
-    
-    // Handle invalid MongoDB ObjectId
     if (error.kind === 'ObjectId') {
       return res.status(404).json({ message: 'User not found' });
     }
-    
-    res.status(500).json({ message: 'Error fetching user' });
+    next(error);
   }
 };
 
@@ -31,7 +27,7 @@ exports.getUserById = async (req, res) => {
  * @route   PUT /api/users/profile
  * @access  Private
  */
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
   try {
     // Fields that can be updated
     const allowedUpdates = [
@@ -59,8 +55,7 @@ exports.updateProfile = async (req, res) => {
     
     res.json(user);
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Error updating profile' });
+    next(error);
   }
 };
 
@@ -69,7 +64,7 @@ exports.updateProfile = async (req, res) => {
  * @route   GET /api/users/search?role=mentor&skill=React&location=Delhi
  * @access  Public
  */
-exports.searchUsers = async (req, res) => {
+exports.searchUsers = async (req, res, next) => {
   try {
     const { role, skill, location, search } = req.query;
     
@@ -105,8 +100,7 @@ exports.searchUsers = async (req, res) => {
     
     res.json(users);
   } catch (error) {
-    console.error('Search users error:', error);
-    res.status(500).json({ message: 'Error searching users' });
+    next(error);
   }
 };
 
@@ -115,7 +109,7 @@ exports.searchUsers = async (req, res) => {
  * @route   GET /api/users/mentors?skill=React
  * @access  Public
  */
-exports.getMentors = async (req, res) => {
+exports.getMentors = async (req, res, next) => {
   try {
     const { skill } = req.query;
     
@@ -132,8 +126,7 @@ exports.getMentors = async (req, res) => {
     
     res.json(mentors);
   } catch (error) {
-    console.error('Get mentors error:', error);
-    res.status(500).json({ message: 'Error fetching mentors' });
+    next(error);
   }
 };
 
@@ -142,7 +135,7 @@ exports.getMentors = async (req, res) => {
  * @route   GET /api/users/:id/projects
  * @access  Public
  */
-exports.getUserProjects = async (req, res) => {
+exports.getUserProjects = async (req, res, next) => {
   try {
     const Project = require('../models/Project');
     
@@ -152,7 +145,6 @@ exports.getUserProjects = async (req, res) => {
     
     res.json(projects);
   } catch (error) {
-    console.error('Get user projects error:', error);
-    res.status(500).json({ message: 'Error fetching user projects' });
+    next(error);
   }
 };

@@ -5,7 +5,7 @@ const Project = require('../models/Project');
  * @route   POST /api/projects
  * @access  Private
  */
-exports.createProject = async (req, res) => {
+exports.createProject = async (req, res, next) => {
   try {
     const project = new Project({
       ...req.body,
@@ -19,11 +19,7 @@ exports.createProject = async (req, res) => {
 
     res.status(201).json(project);
   } catch (error) {
-    console.error('Create project error:', error);
-    res.status(500).json({
-      message: 'Error creating project',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    next(error);
   }
 };
 
@@ -32,7 +28,7 @@ exports.createProject = async (req, res) => {
  * @route   GET /api/projects
  * @access  Public
  */
-exports.getAllProjects = async (req, res) => {
+exports.getAllProjects = async (req, res, next) => {
   try {
     const projects = await Project.find()
       .populate('creator', 'name role college profileImage')
@@ -41,8 +37,7 @@ exports.getAllProjects = async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    console.error('Get all projects error:', error);
-    res.status(500).json({ message: 'Error fetching projects' });
+    next(error);
   }
 };
 
@@ -51,7 +46,7 @@ exports.getAllProjects = async (req, res) => {
  * @route   GET /api/projects/search?category=AI/ML&stage=mvp&search=blockchain
  * @access  Public
  */
-exports.searchProjects = async (req, res) => {
+exports.searchProjects = async (req, res, next) => {
   try {
     const { category, stage, search, lookingFor, tags } = req.query;
 
@@ -95,8 +90,7 @@ exports.searchProjects = async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    console.error('Search projects error:', error);
-    res.status(500).json({ message: 'Error searching projects' });
+    next(error);
   }
 };
 
@@ -105,7 +99,7 @@ exports.searchProjects = async (req, res) => {
  * @route   GET /api/projects/:id
  * @access  Public
  */
-exports.getProjectById = async (req, res) => {
+exports.getProjectById = async (req, res, next) => {
   try {
     // Increment view count and return updated project
     const project = await Project.findByIdAndUpdate(
@@ -122,14 +116,10 @@ exports.getProjectById = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Get project error:', error);
-
-    // Handle invalid MongoDB ObjectId
     if (error.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Project not found' });
     }
-
-    res.status(500).json({ message: 'Error fetching project' });
+    next(error);
   }
 };
 
@@ -138,7 +128,7 @@ exports.getProjectById = async (req, res) => {
  * @route   PUT /api/projects/:id
  * @access  Private (Only creator)
  */
-exports.updateProject = async (req, res) => {
+exports.updateProject = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -166,13 +156,11 @@ exports.updateProject = async (req, res) => {
 
     await project.save();
 
-
     await project.populate('creator', 'name role college');
 
     res.json(project);
   } catch (error) {
-    console.error('Update project error:', error);
-    res.status(500).json({ message: 'Error updating project' });
+    next(error);
   }
 };
 
@@ -181,7 +169,7 @@ exports.updateProject = async (req, res) => {
  * @route   DELETE /api/projects/:id
  * @access  Private (Only creator)
  */
-exports.deleteProject = async (req, res) => {
+exports.deleteProject = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -198,8 +186,7 @@ exports.deleteProject = async (req, res) => {
 
     res.json({ message: 'Project deleted successfully' });
   } catch (error) {
-    console.error('Delete project error:', error);
-    res.status(500).json({ message: 'Error deleting project' });
+    next(error);
   }
 };
 
@@ -208,7 +195,7 @@ exports.deleteProject = async (req, res) => {
  * @route   POST /api/projects/:id/like
  * @access  Private
  */
-exports.toggleLike = async (req, res) => {
+exports.toggleLike = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -239,8 +226,7 @@ exports.toggleLike = async (req, res) => {
       message: isLiked ? 'Project liked' : 'Project unliked'
     });
   } catch (error) {
-    console.error('Toggle like error:', error);
-    res.status(500).json({ message: 'Error toggling like' });
+    next(error);
   }
 };
 
@@ -249,15 +235,14 @@ exports.toggleLike = async (req, res) => {
  * @route   GET /api/projects/my-projects
  * @access  Private
  */
-exports.getMyProjects = async (req, res) => {
+exports.getMyProjects = async (req, res, next) => {
   try {
     const projects = await Project.find({ creator: req.user.userId })
       .sort({ createdAt: -1 });
 
     res.json(projects);
   } catch (error) {
-    console.error('Get my projects error:', error);
-    res.status(500).json({ message: 'Error fetching your projects' });
+    next(error);
   }
 };
 
@@ -266,7 +251,7 @@ exports.getMyProjects = async (req, res) => {
  * @route   POST /api/projects/:id/team
  * @access  Private (Only creator)
  */
-exports.addTeamMember = async (req, res) => {
+exports.addTeamMember = async (req, res, next) => {
   try {
     const { userId } = req.body;
 
@@ -297,8 +282,7 @@ exports.addTeamMember = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Add team member error:', error);
-    res.status(500).json({ message: 'Error adding team member' });
+    next(error);
   }
 };
 
@@ -307,7 +291,7 @@ exports.addTeamMember = async (req, res) => {
  * @route   DELETE /api/projects/:id/team/:userId
  * @access  Private (Only creator)
  */
-exports.removeTeamMember = async (req, res) => {
+exports.removeTeamMember = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -329,7 +313,6 @@ exports.removeTeamMember = async (req, res) => {
 
     res.json({ message: 'Team member removed successfully' });
   } catch (error) {
-    console.error('Remove team member error:', error);
-    res.status(500).json({ message: 'Error removing team member' });
+    next(error);
   }
 };
