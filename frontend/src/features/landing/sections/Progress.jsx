@@ -1,38 +1,32 @@
 import React, { useRef, useState, useEffect } from 'react';
 
 const ScrollCard = ({ num, title, text }) => (
-    <div className="flex-shrink-0 w-[300px] md:w-[420px] h-[480px] relative group">
-        {/* 1. Heavy Hard Shadow - uses black to contrast against the deep red */}
-        <div className="absolute inset-0 bg-black translate-x-4 translate-y-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-300" />
+    // Fluid sizing: scales down for mobile, scales up for desktop
+    <div className="flex-shrink-0 w-[75vw] max-w-[280px] sm:max-w-none sm:w-[320px] md:w-[400px] h-[360px] sm:h-[420px] md:h-[480px] relative group">
+        {/* Shadow layer */}
+        <div className="absolute inset-0 bg-black translate-x-2 translate-y-2 sm:translate-x-3 sm:translate-y-3 md:translate-x-4 md:translate-y-4 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform duration-300" />
 
-        {/* 2. Main Card Body */}
-        <div className="relative h-full bg-white border-4 border-black p-8 md:p-10 flex flex-col justify-between overflow-hidden">
-
-            {/* Animated Corner Accent */}
-            <div className="absolute top-0 right-0 w-16 h-16 bg-orange-500 border-b-4 border-l-4 border-black translate-x-8 -translate-y-8 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-500" />
+        {/* Card content */}
+        <div className="relative h-full bg-white border-[3px] sm:border-4 border-black p-5 sm:p-6 md:p-8 flex flex-col justify-between overflow-hidden">
+            {/* Top right decoration */}
+            <div className="absolute top-0 right-0 w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-orange-500 border-b-[3px] sm:border-b-4 border-l-[3px] sm:border-l-4 border-black translate-x-5 -translate-y-5 sm:translate-x-6 sm:-translate-y-6 md:translate-x-8 md:-translate-y-8 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-500" />
 
             <div>
-                {/* 3. Phase Badge - Stronger Contrast */}
-                <div className="flex items-center gap-3 mb-8">
-                    <span className="text-black font-black text-sm tracking-[0.3em] uppercase bg-orange-500 px-3 py-1 border-2 border-black">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                    <span className="text-black font-black text-[10px] sm:text-xs md:text-sm tracking-[0.25em] sm:tracking-[0.3em] uppercase bg-orange-500 px-2 py-1 sm:px-3 border-2 border-black">
                         Phase {num}
                     </span>
                 </div>
-
-                {/* 4. Title - Black on White for maximum readability */}
-                <h3 className="text-black text-4xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9]">
+                <h3 className="text-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-[0.95] sm:leading-[0.9]">
                     {title}
                 </h3>
             </div>
 
-            {/* 5. Text - Clean, Bold, Institutional Style */}
-            <div className="border-t-4 border-black pt-8">
-                <p className="text-zinc-800 text-lg font-bold uppercase tracking-tight leading-snug">
+            <div className="border-t-[3px] sm:border-t-4 border-black pt-4 sm:pt-6 md:pt-8">
+                <p className="text-zinc-800 text-sm sm:text-base md:text-lg font-bold uppercase tracking-tight leading-snug">
                     {text}
                 </p>
-
-                {/* Decorative 'Sweet' Serif detail */}
-                <span className="font-serif italic text-orange-500 text-2xl mt-4 block">
+                <span className="font-serif italic text-orange-500 text-lg sm:text-xl md:text-2xl mt-2 sm:mt-3 md:mt-4 block">
                     Evolve
                 </span>
             </div>
@@ -67,8 +61,6 @@ const Progress = ({ scrollY }) => {
         }
         setPercentage(progress);
 
-        // --- NEW EXIT LOGIC ---
-        // Trigger shrink AFTER the 5th card is settled (0.88 to 1.0)
         if (progress > 0.88) {
             const exitFact = (progress - 0.88) / 0.12;
             setIsExiting(Math.min(exitFact, 1));
@@ -85,12 +77,13 @@ const Progress = ({ scrollY }) => {
 
         if (cardsContainerRef.current) {
             const track = cardsContainerRef.current;
-            const maxMove = track.scrollWidth - window.innerWidth + (window.innerWidth * 0.2);
+            // Mathematically perfect horizontal scroll: 
+            // Total scrollable width minus the viewport width.
+            const maxMove = track.scrollWidth - window.innerWidth;
             track.style.transform = `translate3d(${-moveProgress * maxMove}px, 0, 0)`;
         }
     }, [scrollY]);
 
-    // --- UPDATED CLIP PATH LOGIC ---
     const morphProgress = Math.min(percentage * 5, 1);
     const vDepth = 25 * (1 - morphProgress);
     const vWidthL = 50 * (1 - morphProgress);
@@ -100,15 +93,11 @@ const Progress = ({ scrollY }) => {
     if (isExiting <= 0) {
         clipPathValue = `polygon(${vWidthL}% ${vDepth}%, ${vWidthR}% ${vDepth}%, 100% 100%, 0% 100%)`;
     } else {
-        // PHASE 1: Sides Pinch to Middle (0 to 0.6 of exit)
-        const sideSqueeze = Math.min(isExiting / 0.6, 1) * 49.5; // 49.5% leaves a tiny sliver in middle
-
-        // PHASE 2: Travel from Center to Bottom (0.6 to 1.0 of exit)
+        const sideSqueeze = Math.min(isExiting / 0.6, 1) * 49.5;
         const verticalMove = isExiting > 0.6 ? (isExiting - 0.6) / 0.4 : 0;
         const topInset = verticalMove * 100;
-        const bottomInset = 0; // Keeping it anchored to bottom or you can add (verticalMove * 10) to shrink it
-
-        clipPathValue = `inset(${topInset}% ${sideSqueeze}% ${bottomInset}% ${sideSqueeze}% round 100px)`;
+        // Switched to a safer responsive border-radius for the exit animation
+        clipPathValue = `inset(${topInset}% ${sideSqueeze}% 0% ${sideSqueeze}% round 40px)`;
     }
 
     const currentRadius = 100 * (1 - Math.pow(Math.min(percentage * 28.33, 1), 2));
@@ -123,15 +112,14 @@ const Progress = ({ scrollY }) => {
                 className="relative w-full"
                 style={{ height: '750vh', zIndex: 50, marginTop: '-120px' }}
             >
+                {/* h-[100dvh] ensures it fits safely on mobile without URL bar jumping */}
                 <div
-                    className="sticky top-0 w-full h-screen overflow-hidden bg-[#841d04ec] flex flex-col items-center justify-center"
+                    className="sticky top-0 w-full h-[100dvh] overflow-hidden bg-[#841d04ec] flex flex-col items-center justify-center"
                     style={{
                         clipPath: clipPathValue,
                         WebkitClipPath: clipPathValue,
                         borderTopLeftRadius: isExiting > 0 ? 0 : `${currentRadius}px`,
                         borderTopRightRadius: isExiting > 0 ? 0 : `${currentRadius}px`,
-
-                        // bg-[#c14747]
                     }}
                 >
                     <div
@@ -142,20 +130,21 @@ const Progress = ({ scrollY }) => {
                         }}
                     >
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(249,115,22,0.15),transparent_50%)]" />
+
                         <div
-                            className="text-center w-full mb-4 px-6"
+                            className="text-center w-full mb-4 px-4 sm:px-6"
                             style={{
                                 transform: `translate3d(0, ${textY}px, 0)`,
                                 opacity: Math.min(percentage * 4, 1),
                             }}
                         >
-                            <h2 className="text-6xl md:text-9xl font-black text-white uppercase tracking-tighter leading-none mt-9.5">
+                            <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-white uppercase tracking-tighter leading-none mt-4 sm:mt-6">
                                 The <span className="text-yellow-400">Journey</span>
                             </h2>
                         </div>
 
                         <div
-                            className="relative w-full overflow-visible"
+                            className="relative w-full overflow-visible flex items-center"
                             style={{
                                 transform: `translate3d(0, ${cardY}px, 0)`,
                                 opacity: cardParallaxProgress,
@@ -164,8 +153,18 @@ const Progress = ({ scrollY }) => {
                         >
                             <div
                                 ref={cardsContainerRef}
-                                className="flex items-stretch gap-10 md:gap-20 px-[70vw] will-change-transform"
+                                className="flex items-stretch gap-6 sm:gap-10 md:gap-16 will-change-transform w-max"
+                                style={{
+                                    // Perfect centering: padding is exactly 50vw minus half the width of the card.
+                                    // 140px = half of 280px (mobile card), 160px = half of 320px (tablet card), 200px = half of 400px (desktop card)
+                                    paddingLeft: 'calc(50vw - min(37.5vw, 140px))', 
+                                    paddingRight: 'calc(50vw - min(37.5vw, 140px))',
+                                }}
                             >
+                                {/* Media queries inside style tags are tough, so we use wrapper classes to adjust padding via Tailwind */}
+                                <div className="hidden sm:block md:hidden absolute inset-0 pointer-events-none" style={{ paddingLeft: 'calc(50vw - 160px)', paddingRight: 'calc(50vw - 160px)' }} />
+                                <div className="hidden md:block absolute inset-0 pointer-events-none" style={{ paddingLeft: 'calc(50vw - 200px)', paddingRight: 'calc(50vw - 200px)' }} />
+                                
                                 {cardData.map((card) => (
                                     <ScrollCard key={card.num} {...card} />
                                 ))}

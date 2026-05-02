@@ -34,51 +34,36 @@ const CYCLING_WORDS = ["RESEARCH", "THESIS", "PROJECT", "IDEA"];
 
 const FLOAT_TAGS = [
   { label: "Development", x: "12%", y: "12%" },
-  { label: "Collaboration", x: "88%", y: "20%" },
+  { label: "Collaboration", x: "78%", y: "20%" },
   { label: "Side Project", x: "8%", y: "55%" },
-  { label: "Hackathon", x: "80%", y: "57%" },
+  { label: "Hackathon", x: "72%", y: "57%" },
   { label: "Mentorship", x: "20%", y: "70%" },
-  { label: "Research", x: "72%", y: "78%" },
+  { label: "Research", x: "68%", y: "78%" },
 ];
-
-const FLOAT_Icons = [
-  { label: "🚀", x: "12%", y: "22%" },
-  { label: "🔥", x: "78%", y: "28%" },
-  { label: "👩🏻‍💻", x: "8%", y: "65%" },
-  { label: "💡", x: "80%", y: "60%" },
-  // { label: "💡", x: "80%", y: "60%" },
-];
-
-
 
 const STATS = [
   { value: "20+", label: "Students" },
   { value: "5+", label: "Startups" },
-  { value: "$2", label: "Raised" },
+  { value: "$2M+", label: "Raised" },
 ];
+
 const Counter = ({ value }) => {
   const count = useMotionValue(0);
-
-  // Extract number from string (e.g., "$2M" -> 2, "200+" -> 200)
   const numericValue = parseInt(value.replace(/[^0-9]/g, ""), 10);
-
-  // Format it back as it counts
+  
   const displayValue = useTransform(count, (latest) => {
     const num = Math.round(latest);
+    if (value.includes("M+")) return `$${num}M+`;
     if (value.startsWith("$")) return `$${num}`;
     if (value.endsWith("+")) return `${num}+`;
     return num;
   });
 
   useEffect(() => {
-    // Duration in seconds, easeOut makes it "snap" into place smoothly
-    const controls = animate(count, numericValue, {
-      duration: 2,
-      ease: "easeOut"
-    });
+    const controls = animate(count, numericValue, { duration: 2, ease: "easeOut" });
     return controls.stop;
   }, [numericValue, count]);
-
+  
   return <motion.div>{displayValue}</motion.div>;
 };
 
@@ -87,11 +72,19 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
   const mouseRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const tagsRef = useRef([]);
   const scrollLineRef = useRef(null);
-
   const [wordIndex, setWordIndex] = useState(0);
   const [wordVisible, setWordVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const lastWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 0);
 
-  /* ── cycling word ── */
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  /* cycling word */
   useEffect(() => {
     const interval = setInterval(() => {
       setWordVisible(false);
@@ -103,57 +96,51 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
     return () => clearInterval(interval);
   }, []);
 
-  /* ── floating tags GSAP ── */
+  /* floating tags GSAP — skip on mobile */
   useEffect(() => {
+    if (isMobile) return;
     tagsRef.current.forEach((el, i) => {
       if (!el) return;
-      gsap.to(el, {
-        y: "+=18",
-        duration: 2.8 + i * 0.4,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        delay: i * 0.3,
-      });
+      gsap.to(el, { y: "+=18", duration: 2.8 + i * 0.4, repeat: -1, yoyo: true, ease: "sine.inOut", delay: i * 0.3 });
       gsap.fromTo(el,
         { opacity: 0, scale: 0.7 },
         { opacity: 1, scale: 1, duration: 0.8, delay: 0.6 + i * 0.15, ease: "back.out(1.4)" }
       );
     });
-  }, []);
+  }, [isMobile]);
 
-  /* ── scroll indicator pulse ── */
+  /* scroll indicator pulse */
   useEffect(() => {
     if (!scrollLineRef.current) return;
     gsap.fromTo(scrollLineRef.current,
       { scaleY: 0, opacity: 0 },
       { scaleY: 1, opacity: 1, duration: 1.2, delay: 1.5, ease: "power3.out", transformOrigin: "top center" }
     );
-    gsap.to(scrollLineRef.current, {
-      opacity: 0.3,
-      duration: 1.2,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: 2.7,
-    });
+    gsap.to(scrollLineRef.current, { opacity: 0.3, duration: 1.2, repeat: -1, yoyo: true, ease: "sine.inOut", delay: 2.7 });
   }, []);
 
-  /* ── mouse tracking ── */
+  /* mouse tracking */
   useEffect(() => {
+    if (isMobile) return;
     const handleMouse = (e) => { mouseRef.current.tx = e.clientX; mouseRef.current.ty = e.clientY; };
     window.addEventListener("mousemove", handleMouse, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouse);
-  }, []);
+  }, [isMobile]);
 
-  /* ── canvas orbs ── */
+  /* canvas orbs */
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const noise = new PerlinNoise();
     let animationFrameId;
 
     const resize = () => {
+      // Prevents the canvas from randomly resetting on mobile when scrolling up/down
+      const currentWidth = window.innerWidth;
+      if (isMobile && currentWidth === lastWidthRef.current && canvas.width !== 0) return;
+      lastWidthRef.current = currentWidth;
+
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
@@ -184,8 +171,9 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
 
       mouseRef.current.x += (mouseRef.current.tx - mouseRef.current.x) * 0.08;
       mouseRef.current.y += (mouseRef.current.ty - mouseRef.current.y) * 0.08;
-      const mx = (mouseRef.current.x / w - 0.5) * 2;
-      const my = (mouseRef.current.y / h - 0.5) * 2;
+      
+      const mx = isMobile ? 0 : (mouseRef.current.x / w - 0.5) * 2;
+      const my = isMobile ? 0 : (mouseRef.current.y / h - 0.5) * 2;
 
       state.orbs.forEach((orb, i) => {
         const nx = noise.noise(state.time + orb.noiseOffset, 0);
@@ -194,7 +182,10 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
         const x = w * (orb.x + nx * 0.25) + mx * 250 * depth;
         const y = h * (orb.y + ny * 0.25) + my * 250 * depth;
         const scale = 1 + Math.sin(state.breathing + i) * 0.15;
-        const r = Math.max(w, h) * orb.baseSize * scale;
+        
+        // Keeps orbs slightly smaller on mobile so text is easier to read
+        const mobileScale = isMobile ? 0.75 : 1;
+        const r = Math.max(w, h) * orb.baseSize * scale * mobileScale;
 
         const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
         const [rC, gC, bC] = orb.color;
@@ -218,180 +209,113 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
       window.removeEventListener("resize", resize);
       gsap.killTweensOf(state);
     };
-  }, []);
+  }, [isMobile]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden" style={{ paddingBottom: "100px" }}>
-      {/* ── Background canvas ── */}
+    // EXACT ORIGINAL STRUCTURE: 100dvh + 80px padding ensures the next section (-80px) is hidden below the fold
+    <section className="relative min-h-[100dvh] overflow-hidden" style={{ paddingBottom: "80px" }}>
+      {/* Background canvas */}
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 z-0"
+        className="fixed inset-0 z-0 pointer-events-none"
         style={{
           filter: `blur(${120 + scrollY * 0.08}px) saturate(150%) contrast(110%)`,
-          // dim hero slightly when menu is open so curtain pops
           opacity: menuOpen ? 0.4 : 1,
           transition: 'opacity 0.5s ease',
         }}
       />
 
-      {/* ── Floating keyword tags ── */}
-      {FLOAT_TAGS.map((tag, i) => (
+      {/* Floating tags — desktop only */}
+      {!isMobile && FLOAT_TAGS.map((tag, i) => (
         <div
           key={tag.label}
           ref={el => (tagsRef.current[i] = el)}
           style={{
-            position: 'absolute',
-            left: tag.x,
-            top: tag.y,
-            zIndex: 5,
-            opacity: 0, // GSAP animates this in
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(8px)',
-            color: 'rgba(255,255,255,0.75)',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            padding: '6px 14px',
-            borderRadius: '100px',
-            letterSpacing: '0.5px',
-            pointerEvents: 'none',
-            userSelect: 'none',
+            position: 'absolute', left: tag.x, top: tag.y, zIndex: 5, opacity: 0,
+            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.75)',
+            fontSize: '0.75rem', fontWeight: 500, padding: '6px 14px',
+            borderRadius: '100px', letterSpacing: '0.5px',
+            pointerEvents: 'none', userSelect: 'none',
           }}
         >
           {tag.label}
         </div>
       ))}
-        {/* {FLOAT_Icons.map((tag, i) => (
-        <div
-          key={tag.label}
-          ref={el => (tagsRef.current[i] = el)}
-          style={{
-            position: 'absolute',
-            left: tag.x,
-            top: tag.y,
-            zIndex: 5,
-            opacity: 0, // GSAP animates this in
-           
-            // border: '1px solid rgba(255,255,255,0.2)',
-            backdropFilter: 'blur(8px)',
-            color: 'rgba(255,255,255,0.75)',
-            fontSize: '3.75rem',
-            fontWeight: 500,
-            padding: '6px 14px',
-            borderRadius: '100px',
-            letterSpacing: '0.5px',
-            pointerEvents: 'none',
-            userSelect: 'none',
-          }}
-        >
-          {tag.label}
-        </div>
-      ))} */}
 
-      {/* ── Main content ── */}
+      {/* Main content - Using exact original structure and styles */}
       <div
-        className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6 max-w-5xl mx-auto"
+        className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] text-center px-4 sm:px-6 max-w-5xl mx-auto"
         style={{ transform: `translateY(${scrollY * 0.2}px)` }}
       >
-        {/* Badge */}
-
-
         {/* Headline */}
         <h1 style={{
-          fontSize: 'clamp(2.2rem, 6vw, 5rem)',
-          fontWeight: 800,
-          color: 'white',
-          lineHeight: 1.1,
-          letterSpacing: '-2px',
-          marginBottom: '8px',
+          fontSize: 'clamp(1.8rem, 5vw, 5rem)',
+          fontWeight: 800, color: 'white',
+          lineHeight: 1.1, letterSpacing: '-2px', marginBottom: '8px',
         }}>
           TURN YOUR ACADEMIC
         </h1>
 
-        {/* Cycling word line */}
+        {/* Cycling word */}
         <h1 style={{
-          fontSize: 'clamp(2.2rem, 6vw, 5rem)',
-          fontWeight: 800,
-          lineHeight: 1.1,
-          letterSpacing: '-2px',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          color: 'white',
+          fontSize: 'clamp(1.8rem, 5vw, 5rem)',
+          fontWeight: 800, lineHeight: 1.1, letterSpacing: '-2px',
+          marginBottom: '8px', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', gap: '16px', color: 'white', flexWrap: 'wrap',
         }}>
-          <span
-            style={{
-              display: 'inline-block',
-              color: '#fb923c',
-              borderBottom: '3px solid #fb923c',
-              paddingBottom: '2px',
-              minWidth: '280px',
-              transition: 'opacity 0.35s ease, transform 0.35s ease',
-              opacity: wordVisible ? 1 : 0,
-              transform: wordVisible ? 'translateY(0)' : 'translateY(-12px)',
-            }}
-          >
+          <span style={{
+            display: 'inline-block', color: '#fb923c',
+            borderBottom: '3px solid #fb923c', paddingBottom: '2px',
+            minWidth: isMobile ? '160px' : '280px',
+            transition: 'opacity 0.35s ease, transform 0.35s ease',
+            opacity: wordVisible ? 1 : 0,
+            transform: wordVisible ? 'translateY(0)' : 'translateY(-12px)',
+            textAlign: 'center',
+          }}>
             {CYCLING_WORDS[wordIndex]}
           </span>
         </h1>
 
         <h1 style={{
-          fontSize: 'clamp(2.2rem, 6vw, 5rem)',
-          fontWeight: 800,
-          color: 'white',
-          lineHeight: 1.1,
-          letterSpacing: '-2px',
-          marginBottom: '28px',
+          fontSize: 'clamp(1.8rem, 5vw, 5rem)',
+          fontWeight: 800, color: 'white',
+          lineHeight: 1.1, letterSpacing: '-2px', marginBottom: '24px',
         }}>
           INTO A STARTUP
         </h1>
 
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.1rem', marginBottom: '40px', maxWidth: '480px' }}>
+        <p style={{
+          color: 'rgba(255,255,255,0.6)',
+          fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+          marginBottom: '36px', maxWidth: '480px', padding: '0 8px'
+        }}>
           Build something real from your college work — with mentors, funding, and a community that gets it.
         </p>
 
-
-
         {/* Stats bar */}
-        <div
-          style={{
-            display: "flex",
-            gap: "48px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-           
-          }}
-        >
+        <div style={{
+          display: "flex", gap: "clamp(24px, 5vw, 48px)",
+          justifyContent: "center", flexWrap: "wrap",
+        }}>
           {STATS.map((s) => (
             <div key={s.label} style={{ textAlign: "center" }}>
-              <div
-                style={{
-                  fontSize: "2.8rem",
-                  fontWeight: 800,
-                  color: "white",
-                  letterSpacing: "-1px",
-                }}
-              >
+              <div style={{
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 800, color: "white", letterSpacing: "-1px",
+              }}>
                 <Counter value={s.value} />
               </div>
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  color: "rgba(255,255,255,0.5)",
-                  letterSpacing: "1.5px",
-                  marginTop: "2px",
-                }}
-              >
+              <div style={{
+                fontSize: "0.7rem", color: "rgba(255,255,255,0.5)",
+                letterSpacing: "1.5px", marginTop: "2px",
+              }}>
                 {s.label.toUpperCase()}
               </div>
             </div>
           ))}
         </div>
       </div>
-
-
     </section>
   );
 };

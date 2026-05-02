@@ -3,7 +3,6 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { motion, useScroll, useTransform, useSpring, easeOut } from 'framer-motion';
 import { AnimatePresence } from 'framer-motion';
 
-
 const UseCases = ({ scrollY }) => {
     const containerRef = useRef(null);
     const dotRef = useRef(null);
@@ -65,11 +64,15 @@ const UseCases = ({ scrollY }) => {
             });
         };
 
-        window.addEventListener('scroll', updatePosition);
+        window.addEventListener('scroll', updatePosition, { passive: true });
+        window.addEventListener('resize', updatePosition); // Recalculate dot on mobile rotation
         updatePosition();
-        return () => window.removeEventListener('scroll', updatePosition);
+        
+        return () => {
+            window.removeEventListener('scroll', updatePosition);
+            window.removeEventListener('resize', updatePosition);
+        };
     }, [CONTROL_PANEL.scrollSensitivity]);
-
 
     const cards = [
         { id: 1, title: "Students", lottie: "/Student.json", text: "Launch your career, find teammates, and build real-world projects." },
@@ -79,17 +82,12 @@ const UseCases = ({ scrollY }) => {
 
     // Card visibility logic
     const getActiveCardIndex = () => {
-        // 1. Wait until the dot has fully landed
         if (relativeProgress < 0.99) return -1;
 
         const rect = containerRef.current.getBoundingClientRect();
         const sectionHeight = containerRef.current.offsetHeight - window.innerHeight;
 
-        // 2. This is the total progress of the 400vh/500vh section
         const totalScroll = Math.min(Math.max(-rect.top / sectionHeight, 0), 1);
-
-        // 3. BUFFER: We subtract 0.15 so cards don't appear immediately.
-        // The cards now animate within the remaining 85% of the scroll.
         const cardProgress = (totalScroll - 0.15) / 0.85;
 
         if (cardProgress < 0) return -1;
@@ -106,14 +104,12 @@ const UseCases = ({ scrollY }) => {
             className="relative w-full"
             style={{ height: '400vh', backgroundColor: '#fffaf5' }}
         >
-
-
-            {/* THE TRAVELING DROP - REMAINING EXACTLY THE SAME */}
+            {/* THE TRAVELING DROP */}
             {relativeProgress > 0 && relativeProgress < 0.99 && (
                 <div
-                    className="fixed w-6 h-6 bg-[#c14747] rounded-full z-[100] pointer-events-none"
+                    className="fixed w-4 h-4 md:w-6 md:h-6 bg-[#c14747] rounded-full z-[100] pointer-events-none"
                     style={{
-                        left: '-15px',
+                        left: '-10px',
                         top: '-10px',
                         transform: `translate3d(
                             ${(window.innerWidth / 2) + (targetPos.x - (window.innerWidth / 2)) * relativeProgress}px, 
@@ -124,13 +120,15 @@ const UseCases = ({ scrollY }) => {
                 />
             )}
 
-            <div className="sticky top-0 h-screen w-full flex items-center justify-start overflow-hidden">
-                {/* GRID CONTAINER - Split into 2 columns */}
-                <div className="max-w-[1600px] px-6 md:px-18 w-full grid grid-cols-1 md:grid-cols-2 gap-10 items-center transform translate-y-1 bg-amber-100 ">
+            {/* Changed h-screen to h-[100dvh] for better mobile rendering */}
+            <div className="sticky top-0 h-[100dvh] w-full flex items-center justify-start overflow-hidden py-10 md:py-0">
+                {/* GRID CONTAINER */}
+                <div className="max-w-[1600px] px-6 md:px-12 lg:px-16 w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center transform translate-y-1 mx-auto">
 
-                    {/* LEFT COLUMN: TEXT (YOUR ORIGINAL CODE) */}
-                    <div className="mb-16 md:mb-0">
-                        <h1 className="text-6xl md:text-9xl font-black text-[#1e0a42] tracking-tighter leading-tight text-left">
+                    {/* LEFT COLUMN: TEXT */}
+                    <div className="mb-4 md:mb-0 text-center md:text-left flex flex-col items-center md:items-start">
+                        {/* Fluid typography scaling */}
+                        <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-[#1e0a42] tracking-tighter leading-tight">
                             Who <span className="relative inline-block">
                                 is
                                 <span
@@ -145,13 +143,13 @@ const UseCases = ({ scrollY }) => {
                                         pointerEvents: 'none'
                                     }}
                                 />
-                            </span> it for?
+                            </span><br className="hidden md:block" /> it for?
                         </h1>
                     </div>
 
-                    {/* RIGHT COLUMN: MODERN SWAPPING CARDS */}
-
-                    <div className="relative h-[550px] w-full flex items-center justify-center">
+                    {/* RIGHT COLUMN: SWAPPING CARDS */}
+                    {/* Adjusted height for mobile to prevent overflow */}
+                    <div className="relative h-[420px] sm:h-[480px] md:h-[550px] w-full flex items-center justify-center">
                         <AnimatePresence mode="popLayout">
                             {cards.map((card, index) => (
                                 index === activeIndex && (
@@ -161,41 +159,36 @@ const UseCases = ({ scrollY }) => {
                                         initial="enter"
                                         animate="center"
                                         exit="exit"
-                                        /* 1. Added group here so we can animate children on hover */
-                                        className="absolute w-full max-w-[550px] pointer-events-none group"
+                                        className="absolute w-full max-w-[340px] sm:max-w-[420px] md:max-w-[550px] pointer-events-none group"
                                     >
-
                                         {/* --- NEOBRUTALIST PREMIUM CARD DESIGN --- */}
-                                        {/* 2. Added sharp shadow, black border, white bg, and square edges (removed rounded) */}
-                                        <div className="bg-white border-4 border-black shadow-[15px_15px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-[540px] transition-all duration-300 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none">
+                                        {/* Adjusted heights, borders, and shadows for responsiveness */}
+                                        <div className="bg-white border-[3px] md:border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[15px_15px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-[400px] sm:h-[460px] md:h-[540px] transition-all duration-300 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none flex flex-col">
 
                                             {/* Lottie Animation Container */}
-                                            {/* 3. Replaced soft gradient with solid Orange. Made container perfectly square edges. */}
-                                            <div className="w-full h-[320px] bg-orange-500 flex items-center justify-center p-8 relative border-b-4 border-black">
-                                                {/* Subtle background texture for the industrial look */}
+                                            {/* Adjusted height scaling */}
+                                            <div className="w-full h-[180px] sm:h-[240px] md:h-[320px] bg-orange-500 flex items-center justify-center p-4 sm:p-6 md:p-8 relative border-b-[3px] md:border-b-4 border-black shrink-0">
                                                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/dark-dotted.png')]"></div>
 
-                                                {/* 4. Made the Lottie container sharp-edged with a thin border */}
                                                 {card.lottie && (
-                                                    <div className="relative z-10 w-full h-full bg-white border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-4">
-                                                        <DotLottieReact src={card.lottie} loop autoplay />
+                                                    <div className="relative z-10 w-full h-full bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] md:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] p-2 md:p-4 flex items-center justify-center">
+                                                        <DotLottieReact src={card.lottie} loop autoplay className="max-w-full max-h-full" />
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Content Section */}
-                                            {/* 5. Fixed typography: Heavy black font, tight tracking, standard body weight. */}
-                                            <div className="p-9 mt-2">
-                                                <h3 className="text-4xl font-black uppercase tracking-tighter text-black mb-4 leading-none">
+                                            {/* Adjusted paddings and font sizes */}
+                                            <div className="p-5 sm:p-7 md:p-9 flex-1 flex flex-col justify-center">
+                                                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter text-black mb-2 md:mb-4 leading-none">
                                                     {card.title}
                                                 </h3>
 
-                                                {/* Added the 'sweet' serif detail on a key word if present (requires optional data in card object) */}
                                                 {card.accentWord && (
-                                                    <span className="font-serif italic text-orange-500 text-3xl font-medium block -mt-2 mb-2">{card.accentWord}.</span>
+                                                    <span className="font-serif italic text-orange-500 text-xl sm:text-2xl md:text-3xl font-medium block -mt-1 md:-mt-2 mb-1 md:mb-2">{card.accentWord}.</span>
                                                 )}
 
-                                                <p className="text-zinc-700 text-[15px] leading-relaxed font-bold uppercase tracking-wide">
+                                                <p className="text-zinc-700 text-xs sm:text-sm md:text-[15px] leading-snug md:leading-relaxed font-bold uppercase tracking-wide">
                                                     {card.text}
                                                 </p>
                                             </div>
@@ -208,7 +201,6 @@ const UseCases = ({ scrollY }) => {
 
                 </div>
             </div>
-
         </section>
     );
 };

@@ -6,12 +6,16 @@ import StudentDashboard_main from './student/StudentDashboard-main';
 import MentorLayout from '../layouts/MentorLayout';
 import MentorMain from './mentor/MentorDashboard-main';
 
-
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return <div className="min-h-screen bg-[#050505]" />;
+  // Enhanced loading state to perfectly center any future spinner/logo
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center w-full" />
+    );
+  }
 
   const role = user?.role?.toLowerCase();
 

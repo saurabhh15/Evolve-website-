@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import footerImg from "../assets/footer.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -15,7 +14,6 @@ const Footer = () => {
   const bottomInView = useInView(bottomRef, { once: true, margin: "-60px" });
 
   const [glowVisible, setGlowVisible] = useState(false);
-  const [glowPos, setGlowPos] = useState({ x: 0, y: 0 });
   const [hoveredLink, setHoveredLink] = useState(null);
 
   const handleMouseMove = (e) => {
@@ -33,18 +31,32 @@ const Footer = () => {
 
   const handleMouseLeave = () => setGlowVisible(false);
 
- const linkGroups = [
+  // Removed the 'PLATFORM' section as requested
+  const linkGroups = [
     {
-      title: "PLATFORM",
+      title: "COMPANY",
       links: [
-       
-        { name: "Join Evolve", href: "/get-started", active: true },
+        { name: "About Us", href: "/about" },
+        { name: "Success Stories", href: "/success-stories" },
+        { name: "Events & Hackathons", href: "/events" },
+        { name: "Careers", href: "/careers" },
+      ],
+    },
+    {
+      title: "RESOURCES",
+      links: [
+        { name: "Startup Blog", href: "/blog" },
+        { name: "Pitch Templates", href: "/templates" },
+        { name: "Help Center", href: "/help" },
       ],
     },
     {
       title: "CONNECT",
       links: [
-        { name: "Contact Us", href: "/Contact" },
+        { name: "Contact Us", href: "/contact" },
+        { name: "Newsletter", href: "/newsletter" },
+        { name: "Privacy Policy", href: "/privacy" },
+        { name: "Terms of Service", href: "/terms" },
       ],
     },
   ];
@@ -56,29 +68,24 @@ const Footer = () => {
     { label: "Email", href: "#", icon: "M22 6L12 13 2 6M2 4h20v16H2z" },
   ];
 
-
   return (
     <footer
       ref={footerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative bg-[#0a0a0a] text-[#e5e0d8] overflow-hidden flex flex-col justify-end pb-10"
+      className="relative bg-[#0a0a0a] text-[#e5e0d8] overflow-hidden flex flex-col justify-end pb-10 min-h-[50vh]"
     >
       {/* Mouse-tracking glow */}
       <div
-        className="absolute rounded-full pointer-events-none z-0"
+        className="absolute rounded-full pointer-events-none z-0 hidden md:block" 
         style={{
           width: "700px",
           height: "450px",
           background: "radial-gradient(ellipse, rgba(234,88,12,0.2) 0%, rgba(234,88,12,0.05) 50%, transparent 70%)",
           filter: "blur(70px)",
-
-          // Position using CSS variables and transform
           left: 0,
           top: 0,
           transform: "translate(calc(var(--mouse-x) - 50%), calc(var(--mouse-y) - 50%))",
-
-          // Only transition the appearance, not the movement
           opacity: glowVisible ? 1 : 0,
           transition: "opacity 0.8s ease",
           willChange: "transform",
@@ -89,7 +96,8 @@ const Footer = () => {
       <div
         className="absolute bottom-0 left-1/2 pointer-events-none z-0"
         style={{
-          width: "800px",
+          width: "100%",
+          maxWidth: "800px",
           height: "300px",
           background: "radial-gradient(ellipse, rgba(234,88,12,0.08) 0%, transparent 70%)",
           filter: "blur(80px)",
@@ -99,75 +107,67 @@ const Footer = () => {
 
       {/* Pattern Overlay */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-10"
+        className="absolute inset-0 pointer-events-none opacity-[0.07]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f97316' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           backgroundSize: "80px 80px",
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full pt-1">
-        <div>
-          {/* Title */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full pt-16 md:pt-1">
+        
+        {/* Title Container */}
+        <div ref={titleRef} className="flex justify-center w-full mb-12 md:mb-10 overflow-hidden">
           <h1
             style={{
-              fontSize: "20rem",
+              fontSize: "clamp(4.5rem, 18vw, 20rem)", 
               fontWeight: "bold",
               display: "flex",
+              justifyContent: "center",
               gap: "0.1rem",
+              lineHeight: "1.1",
             }}
           >
-            {/* First E - white */}
-            <span
-              style={{
-                color: "rgb(230, 230, 230)",
-                fontFamily: "Outfit, sans-serif",
-              }}
+            <motion.span
+              initial={{ y: 50, opacity: 0 }}
+              animate={titleInView ? { y: 0, opacity: 1 } : {}}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              style={{ color: "rgb(230, 230, 230)", fontFamily: "Outfit, sans-serif" }}
             >
               E
-            </span>
+            </motion.span>
 
-            {/* V - low opacity */}
-            <span
-              style={{
-                color: "rgba(255, 102, 0, 0.2)",
-                WebkitTextStroke: "1.5px rgb(255, 137, 19)",
-                fontFamily: "sans-serif",
-              }}
+            <motion.span
+              initial={{ y: 50, opacity: 0 }}
+              animate={titleInView ? { y: 0, opacity: 1 } : {}}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              style={{ color: "rgba(255, 102, 0, 0.2)", WebkitTextStroke: "1.5px rgb(255, 137, 19)", fontFamily: "sans-serif" }}
             >
               v
-            </span>
+            </motion.span>
 
-            {/* OLV - gradient */}
-            <span
-              style={{
-                background:
-                  "linear-gradient(to bottom, #f5b23a, #e4871a, #c86a0f, #9c4e0a)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontFamily: "Outfit, sans-serif",
-              }}
+            <motion.span
+              initial={{ y: 50, opacity: 0 }}
+              animate={titleInView ? { y: 0, opacity: 1 } : {}}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              style={{ background: "linear-gradient(to bottom, #f5b23a, #e4871a, #c86a0f, #9c4e0a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: "Outfit, sans-serif" }}
             >
               olv
-            </span>
+            </motion.span>
 
-            {/* Last E - low opacity */}
-            <span
-              style={{
-                color: "rgba(255, 102, 0, 0.2)",
-                WebkitTextStroke: "1.5px rgb(255, 137, 19)",
-                fontFamily: "sans-serif",
-              }}
+            <motion.span
+              initial={{ y: 50, opacity: 0 }}
+              animate={titleInView ? { y: 0, opacity: 1 } : {}}
+              transition={{ duration: 0.7, delay: 0.4 }}
+              style={{ color: "rgba(255, 102, 0, 0.2)", WebkitTextStroke: "1.5px rgb(255, 137, 19)", fontFamily: "sans-serif" }}
             >
               e
-            </span>
+            </motion.span>
           </h1>
         </div>
 
-
-
-        {/* Links Grid */}
-        <div ref={gridRef} className="relative grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-4 mb-0">
+        {/* Adjusted Grid: 3 columns instead of 4, evenly spaced */}
+        <div ref={gridRef} className="relative grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 md:gap-12 mb-16 md:mb-20 max-w-5xl mx-auto">
           {linkGroups.map((group, idx) => (
             <motion.div
               key={group.title}
@@ -175,17 +175,17 @@ const Footer = () => {
               animate={gridInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: idx * 0.12, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="mb-6 overflow-hidden">
-                <h3 className="text-[13px] font-bold tracking-[0.2em] text-[#f97316]">{group.title}</h3>
+              <div className="mb-5 overflow-hidden">
+                <h3 className="text-[12px] md:text-[13px] font-bold tracking-[0.2em] text-[#f97316]">{group.title}</h3>
                 <motion.div
                   initial={{ scaleX: 0 }}
                   animate={gridInView ? { scaleX: 1 } : {}}
                   transition={{ duration: 0.5, delay: idx * 0.12 + 0.3, ease: "easeOut" }}
-                  className="h-px bg-[#f97316]/30 mt-2 origin-left"
+                  className="h-px bg-[#f97316]/30 mt-2 origin-left w-3/4 md:w-[85%]"
                 />
               </div>
 
-              <ul className="space-y-4">
+              <ul className="space-y-3 md:space-y-4">
                 {group.links.map((link, linkIdx) => (
                   <motion.li
                     key={link.name}
@@ -226,12 +226,11 @@ const Footer = () => {
           ))}
         </div>
 
-
         {/* Bottom Bar */}
-        <div ref={bottomRef} className="flex flex-col md:flex-row justify-between items-center pt-8">
+        <div ref={bottomRef} className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-4 pt-8 border-t border-white/10">
 
           {/* Social Links */}
-          <div className="flex-1 flex justify-start gap-4 md:gap-5">
+          <div className="flex-1 flex justify-center md:justify-start gap-4 md:gap-5 w-full">
             {socialLinks.map((social, i) => (
               <motion.a
                 key={social.label}
@@ -252,15 +251,21 @@ const Footer = () => {
           </div>
 
           {/* Copyright */}
-          <div className="md:flex-1 flex justify-center md:justify-end">
-            <p className="text-white/20 uppercase font-medium">
+          <div className="md:flex-1 flex justify-center md:justify-center w-full">
+            <p className="text-white/30 text-[10px] md:text-xs uppercase tracking-widest font-medium text-center">
               © {currentYear} Evolve. All rights reserved.
             </p>
           </div>
 
-
-          <div className="md:flex-1 flex justify-center md:justify-end mt-4 md:mt-0">
-            <p className="text-white/40 font-medium">Proudly Made IN</p>
+          {/* Location / Brand Tag */}
+          <div className="md:flex-1 flex justify-center md:justify-end mt-2 md:mt-0 w-full">
+            <motion.p 
+              whileHover={{ color: "#f97316", scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="text-white/50 text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase cursor-default"
+            >
+              Proudly Made IN 🇮🇳
+            </motion.p>
           </div>
         </div>
 

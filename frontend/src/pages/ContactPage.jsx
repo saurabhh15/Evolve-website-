@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, ArrowUpRight, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Clock } from 'lucide-react';
 
 const ContactPage = () => {
   const [status, setStatus] = useState('');
@@ -21,15 +21,15 @@ const ContactPage = () => {
       <div className="flex flex-col lg:flex-row min-h-screen relative">
 
         {/* Decorative Elements */}
-        <div className="fixed top-0 right-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="fixed bottom-0 left-0 w-96 h-96 bg-black/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="fixed top-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="fixed bottom-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-black/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Left Side: Brand & Info */}
         <motion.section
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="lg:w-3/5 bg-black text-white p-8 md:p-16 flex flex-col justify-between relative overflow-hidden z-0"
+          className="w-full lg:w-[55%] bg-black text-white p-6 sm:p-10 md:p-16 flex flex-col justify-between relative overflow-hidden z-0 min-h-[50vh] lg:min-h-screen"
         >
           {/* Subtle grid pattern */}
           <div className="absolute inset-0 opacity-[0.03]" style={{
@@ -41,46 +41,43 @@ const ContactPage = () => {
           }} />
 
           {/* Gradient orb */}
-          <div className="absolute -top-32 -right-32 w-96 h-96 bg-orange-500/20 rounded-full blur-[100px]" />
+          <div className="absolute -top-32 -right-32 w-64 h-64 md:w-96 md:h-96 bg-orange-500/20 rounded-full blur-[100px]" />
 
-          <div className="relative z-0">
-            {/* Animated accent bar */}
-
-            <motion.h1
-              className="text-6xl md:text-8xl font-black uppercase leading-[0.9] mb-4 tracking-tighter"
+          <div className="relative z-10 pt-10 md:pt-0">
+            {/* Animated Title */}
+            <motion.div
+              className="mb-8 md:mb-16"
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <h1 className="text-8xl font-black uppercase tracking-tighter leading-none mt-3.5"style={{ fontFamily: 'sans-serif'}}>
+              <h1 className="text-5xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none" style={{ fontFamily: 'sans-serif' }}>
                 Let's <br />
+                <span className="text-orange-500 italic">Connect.</span>
               </h1>
-              <span
-                className="text-orange-500 italic"
-                style={{ fontFamily: 'sans-serif'}}
-              >
-                Connect.
-              </span>
+              
+              {/* Responsive Animated accent bar */}
               <motion.div
-                className="w-96 h-1 bg-gradient-to-r from-orange-500 to-orange-600 mt-[4px] ml-3.5"
-                initial={{ width: 0 }}
-                animate={{ width: 454 }}
-                transition={{ duration: 3, delay: 0.5 }}
+                className="h-1.5 md:h-2 bg-gradient-to-r from-orange-500 to-orange-600 mt-2 sm:mt-3 md:ml-2 max-w-[280px] sm:max-w-[340px] md:max-w-[454px]"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 2.5, delay: 0.5, ease: "easeOut" }}
+                style={{ transformOrigin: 'left' }}
               />
-            </motion.h1>
+            </motion.div>
 
             <motion.p
-              className="text-zinc-400 text-lg md:text-xl max-w-md mb-16 leading-relaxed"
+              className="text-zinc-400 text-base sm:text-lg md:text-xl max-w-md mb-12 md:mb-16 leading-relaxed"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Need Help ? We are happy to help you!
+              Need Help? We are happy to help you! Reach out and let's build something great.
             </motion.p>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pb-12 lg:pb-0">
               {[
-                { icon: Mail, label: 'Email Us', value: 'evolve.dev.support@gmail.com', delay: 0.5 },
+                { icon: Mail, label: 'Email Us', value: 'evolve.support@gmail.com', delay: 0.5 },
                 { icon: Phone, label: 'Call Us', value: '+123456789', delay: 0.6 },
                 { icon: MapPin, label: 'Studio', value: 'DholakPur', delay: 0.7 }
               ].map((item, index) => (
@@ -88,15 +85,6 @@ const ContactPage = () => {
               ))}
             </div>
           </div>
-
-          <motion.div
-            className="relative z-10 -top-11 border-t border-zinc-800"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1 }}
-          >
-
-          </motion.div>
         </motion.section>
 
         {/* Right Side: Contact Form */}
@@ -104,22 +92,23 @@ const ContactPage = () => {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="lg:w-3/5 p-8 md:p-16 flex items-center justify-center relative rounded-4xl bg-amber-50 -ml-25 z-30 "
+          // Responsive layout overlapping: Vertical overlap on mobile (-mt-10), Horizontal overlap on desktop (-ml-[10%])
+          className="w-full lg:w-[55%] p-6 sm:p-10 md:p-16 flex items-center justify-center relative rounded-t-[2.5rem] lg:rounded-t-none lg:rounded-l-[3rem] bg-amber-50 -mt-10 lg:mt-0 lg:-ml-[10%] z-30 shadow-2xl"
         >
-          <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-10 relative z-20">
+          <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-8 md:space-y-10 relative z-20">
 
             {/* Form Header */}
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="mb-12"
+              className="mb-8 md:mb-12 pt-4 lg:pt-0"
             >
-              <h2 className="text-4xl md:text-5xl font-black mb-2 tracking-tight mt-3.5">Start a Conversation</h2>
-              <p className="text-zinc-500 text-lg">Fill out the form below and we'll get back to you within 24 hours.</p>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-2 tracking-tight">Start a Conversation</h2>
+              <p className="text-zinc-500 text-base sm:text-lg">Fill out the form below and we'll get back to you within 24 hours.</p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <FormField
                 label="Full Name"
                 type="text"
@@ -140,22 +129,20 @@ const ContactPage = () => {
               />
             </div>
 
-
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.8 }}
               className="relative"
             >
-              <div className={`border-b-2 transition-all duration-300 py-3 ${focusedField === 'message' ? 'border-orange-500' : 'border-zinc-800'
-                }`}>
-                <label className="text-[11px] uppercase font-bold tracking-[0.15em] text-zinc-400 block mb-2">
+              <div className={`border-b-2 transition-all duration-300 py-3 ${focusedField === 'message' ? 'border-orange-500' : 'border-zinc-800'}`}>
+                <label className="text-[10px] sm:text-[11px] uppercase font-bold tracking-[0.15em] text-zinc-400 block mb-2">
                   Your Message
                 </label>
                 <textarea
-                  rows="5"
+                  rows="4"
                   placeholder="Tell us about your project, goals, and timeline..."
-                  className="w-full focus:ring-0 text-black placeholder-zinc-300 font-medium resize-none p-4"
+                  className="w-full bg-transparent border-none focus:ring-0 text-black placeholder-zinc-400 font-medium resize-none px-0 py-2 sm:p-4 outline-none"
                   onFocus={() => setFocusedField('message')}
                   onBlur={() => setFocusedField(null)}
                   required
@@ -173,7 +160,7 @@ const ContactPage = () => {
                 disabled={status === 'sending'}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative flex items-center justify-center space-x-4 bg-black text-white px-10 py-6 w-full md:w-auto overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]"
+                className="group relative flex items-center justify-center space-x-4 bg-black text-white px-8 py-5 w-full md:w-auto overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]"
               >
                 {/* Animated background */}
                 <motion.div
@@ -183,7 +170,7 @@ const ContactPage = () => {
                   transition={{ duration: 0.4 }}
                 />
 
-                <span className="relative z-10 font-bold uppercase tracking-[0.15em] text-sm">
+                <span className="relative z-10 font-bold uppercase tracking-[0.15em] text-xs sm:text-sm">
                   {status === 'sending' ? 'Sending...' : status === 'sent' ? 'Message Sent!' : 'Send Message'}
                 </span>
 
@@ -208,7 +195,7 @@ const ContactPage = () => {
               </motion.button>
 
               {/* Trust badges */}
-              <div className="flex items-center gap-6 mt-8 text-xs text-zinc-400">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 md:mt-8 text-[10px] sm:text-xs text-zinc-500">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                   <span className="uppercase tracking-wider font-medium">Secure SSL</span>
@@ -231,14 +218,14 @@ const ContactPage = () => {
 const ContactInfoItem = ({ icon: Icon, label, value, delay }) => {
   return (
     <motion.div
-      className="flex items-start space-x-4 group cursor-pointer"
+      className="flex items-center space-x-4 group cursor-pointer"
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.6, delay }}
       whileHover={{ x: 8 }}
     >
       <motion.div
-        className="p-3 bg-zinc-900 relative overflow-hidden"
+        className="p-3 bg-zinc-900 relative overflow-hidden shrink-0"
         whileHover={{ scale: 1.05 }}
         transition={{ duration: 0.3 }}
       >
@@ -248,11 +235,11 @@ const ContactInfoItem = ({ icon: Icon, label, value, delay }) => {
           whileHover={{ y: 0 }}
           transition={{ duration: 0.3 }}
         />
-        <Icon size={20} className="text-white relative z-10" />
+        <Icon size={18} className="text-white relative z-10 sm:w-5 sm:h-5" />
       </motion.div>
-      <div className="pt-1">
-        <p className="text-[10px] uppercase tracking-[0.15em] text-zinc-500 font-bold mb-1">{label}</p>
-        <p className="text-xl font-bold group-hover:text-orange-500 transition-colors duration-300">{value}</p>
+      <div className="pt-0.5">
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.15em] text-zinc-500 font-bold mb-0.5">{label}</p>
+        <p className="text-base sm:text-lg md:text-xl font-bold group-hover:text-orange-500 transition-colors duration-300 break-all sm:break-normal">{value}</p>
       </div>
     </motion.div>
   );
@@ -267,15 +254,14 @@ const FormField = ({ label, type, placeholder, delay, focused, onFocus, onBlur }
       transition={{ duration: 0.6, delay }}
       className="relative group"
     >
-      <div className={`border-b-2 transition-all duration-300 py-3 ${focused ? 'border-orange-500' : 'border-zinc-200'
-        }`}>
-        <label className="text-[11px] uppercase font-bold tracking-[0.15em] text-zinc-400 block mb-2">
+      <div className={`border-b-2 transition-all duration-300 py-2 sm:py-3 ${focused ? 'border-orange-500' : 'border-zinc-300'}`}>
+        <label className="text-[10px] sm:text-[11px] uppercase font-bold tracking-[0.15em] text-zinc-400 block mb-1.5 sm:mb-2">
           {label}
         </label>
         <input
           type={type}
           placeholder={placeholder}
-          className="w-full bg-transparent border-none focus:ring-0 px-0 py-1 text-black placeholder-zinc-300 font-semibold"
+          className="w-full bg-transparent border-none outline-none focus:ring-0 px-0 py-1 text-black placeholder-zinc-400 font-semibold text-sm sm:text-base"
           onFocus={onFocus}
           onBlur={onBlur}
           required
