@@ -6,24 +6,25 @@ import { AnimatePresence } from 'framer-motion';
 const UseCases = ({ scrollY }) => {
     const containerRef = useRef(null);
     const dotRef = useRef(null);
-    const [targetPos, setTargetPos] = useState({ x: 0, y: 0 });
-    const [dropStartPos, setDropStartPos] = useState({ x: 0, y: 0 });
+    const [dotSpecs, setDotSpecs] = useState({ x: 0, y: 0, w: 0, h: 0 });
     const [relativeProgress, setRelativeProgress] = useState(0);
 
     const CONTROL_PANEL = {
+        targetXOffset: 0,
+        targetYOffset: 0,
         scrollSensitivity: 600,
     };
 
     const stackVariants = {
         enter: {
-            x: '100%',
+            x: '100%',     
             opacity: 0,
-            scale: 0.9,
-            rotate: 0,
+            scale: 0.9,    
+            rotate: 0,    
             zIndex: 0
         },
         center: {
-            x: 0,
+            x: 0,          
             opacity: 1,
             scale: 1,
             rotate: 0,
@@ -35,11 +36,11 @@ const UseCases = ({ scrollY }) => {
             }
         },
         exit: {
-            x: -20,
-            y: 10,
-            opacity: 0.9,
+            x: -20,        
+            y: 10,         
+            opacity: 0.9,  
             scale: 0,
-            rotate: 0,
+            rotate: 0,    
             zIndex: 5,
             transition: { duration: 0.4, easeOut }
         }
@@ -56,30 +57,20 @@ const UseCases = ({ scrollY }) => {
             const progress = Math.min(Math.max((startTracking - rect.top) / CONTROL_PANEL.scrollSensitivity, 0), 1);
             setRelativeProgress(progress);
 
-            // Get the exact position of the dot element on screen
+            // Dynamically grab exact dimensions and position for a flawless handoff
             const dotRect = dotRef.current.getBoundingClientRect();
-            const dotCenterX = dotRect.left + dotRect.width / 2;
-            const dotCenterY = dotRect.top + dotRect.height / 2;
-
-            setTargetPos({
-                x: dotCenterX,
-                y: dotCenterY,
+            setDotSpecs({
+                x: dotRect.left + (dotRect.width / 2),
+                y: dotRect.top + (dotRect.height / 2),
+                w: dotRect.width,
+                h: dotRect.height
             });
-
-            // The drop starts at the top of the viewport, horizontally aligned with the dot
-            // We freeze this only once (progress === 0) so it doesn't jump mid-animation
-            if (progress === 0) {
-                setDropStartPos({
-                    x: dotCenterX,
-                    y: 0,
-                });
-            }
         };
 
         window.addEventListener('scroll', updatePosition, { passive: true });
         window.addEventListener('resize', updatePosition);
         updatePosition();
-
+        
         return () => {
             window.removeEventListener('scroll', updatePosition);
             window.removeEventListener('resize', updatePosition);
@@ -109,24 +100,27 @@ const UseCases = ({ scrollY }) => {
 
     const activeIndex = getActiveCardIndex();
 
-    // Interpolate drop position: from dropStartPos → targetPos based on relativeProgress
-    const dropX = dropStartPos.x + (targetPos.x - dropStartPos.x) * relativeProgress;
-    const dropY = dropStartPos.y + (targetPos.y - dropStartPos.y) * relativeProgress;
-
     return (
         <section
             ref={containerRef}
             className="relative w-full"
             style={{ height: '400vh', backgroundColor: '#fffaf5' }}
         >
-            {/* THE TRAVELING DROP — position derived purely from element rects */}
+            {/* THE TRAVELING DROP - Disappears exactly at 0.99 when it perfectly covers the 'i' dot */}
             {relativeProgress > 0 && relativeProgress < 0.99 && (
                 <div
-                    className="fixed w-4 h-4 md:w-6 md:h-6 bg-[#c14747] rounded-full z-[100] pointer-events-none"
+                    className="fixed rounded-full z-[100] pointer-events-none"
                     style={{
+                        backgroundColor: '#c14747',
+                        width: `${dotSpecs.w}px`,
+                        height: `${dotSpecs.h}px`,
                         left: 0,
                         top: 0,
-                        transform: `translate3d(${dropX - 8}px, ${dropY - 8}px, 0)`,
+                        transform: `translate3d(
+                            ${(window.innerWidth / 2) + (dotSpecs.x - (window.innerWidth / 2)) * relativeProgress - (dotSpecs.w / 2)}px, 
+                            ${dotSpecs.y * relativeProgress - (dotSpecs.h / 2)}px, 
+                            0
+                        )`,
                     }}
                 />
             )}
@@ -134,34 +128,31 @@ const UseCases = ({ scrollY }) => {
             <div className="sticky top-0 h-[100dvh] w-full flex items-center justify-start overflow-hidden py-10 md:py-0">
                 <div className="max-w-[1600px] px-6 md:px-12 lg:px-16 w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 items-center transform translate-y-1 mx-auto">
 
-                    {/* LEFT COLUMN: TEXT */}
                     <div className="mb-4 md:mb-0 text-center md:text-left flex flex-col items-center md:items-start">
-                        {/*
-                            FIX: Reduced font size on small screens so "Who is it for?"
-                            doesn't overflow the viewport horizontally.
-                            Using clamp-style Tailwind classes: text-4xl on xs, scaling up.
-                        */}
-                        <h1 className="text-4xl xs:text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-[#1e0a42] tracking-tighter leading-tight whitespace-nowrap md:whitespace-normal">
+                        <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-[#1e0a42] tracking-tighter leading-tight">
                             Who <span className="relative inline-block">
-                                is
+                                <span className="relative z-10">is</span>
+                                {/* THE STATIC TARGET DOT - Starts as text color, turns red at 0.99 */}
                                 <span
                                     ref={dotRef}
-                                    className="absolute rounded-full bg-[#c14747]"
+                                    className="absolute rounded-full"
                                     style={{
                                         width: '0.20em',
                                         height: '0.21em',
                                         top: '0.25em',
-                                        left: '6px',
-                                        opacity: relativeProgress >= 0.98 ? 1 : 0,
-                                        pointerEvents: 'none'
+                                        left: '0.05em', 
+                                        backgroundColor: relativeProgress >= 0.99 ? '#c14747' : '#1e0a42',
+                                        transition: 'background-color 0.1s ease',
+                                        opacity: 1, // Always visible to act as the default 'i' dot
+                                        pointerEvents: 'none',
+                                        zIndex: 20
                                     }}
                                 />
                             </span><br className="hidden md:block" /> it for?
                         </h1>
                     </div>
 
-                    {/* RIGHT COLUMN: SWAPPING CARDS */}
-                    <div className="relative h-[380px] xs:h-[420px] sm:h-[480px] md:h-[550px] w-full flex items-center justify-center">
+                    <div className="relative h-[420px] sm:h-[480px] md:h-[550px] w-full flex items-center justify-center">
                         <AnimatePresence mode="popLayout">
                             {cards.map((card, index) => (
                                 index === activeIndex && (
@@ -171,12 +162,11 @@ const UseCases = ({ scrollY }) => {
                                         initial="enter"
                                         animate="center"
                                         exit="exit"
-                                        className="absolute w-full max-w-[320px] xs:max-w-[360px] sm:max-w-[420px] md:max-w-[550px] pointer-events-none group"
+                                        className="absolute w-full max-w-[340px] sm:max-w-[420px] md:max-w-[550px] pointer-events-none group"
                                     >
-                                        <div className="bg-white border-[3px] md:border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[15px_15px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-[360px] xs:h-[400px] sm:h-[460px] md:h-[540px] transition-all duration-300 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none flex flex-col">
+                                        <div className="bg-white border-[3px] md:border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[15px_15px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-[400px] sm:h-[460px] md:h-[540px] transition-all duration-300 group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none flex flex-col">
 
-                                            {/* Lottie Animation Container */}
-                                            <div className="w-full h-[160px] xs:h-[190px] sm:h-[240px] md:h-[320px] bg-orange-500 flex items-center justify-center p-4 sm:p-6 md:p-8 relative border-b-[3px] md:border-b-4 border-black shrink-0">
+                                            <div className="w-full h-[180px] sm:h-[240px] md:h-[320px] bg-orange-500 flex items-center justify-center p-4 sm:p-6 md:p-8 relative border-b-[3px] md:border-b-4 border-black shrink-0">
                                                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/dark-dotted.png')]"></div>
 
                                                 {card.lottie && (
@@ -186,8 +176,7 @@ const UseCases = ({ scrollY }) => {
                                                 )}
                                             </div>
 
-                                            {/* Content Section */}
-                                            <div className="p-4 sm:p-7 md:p-9 flex-1 flex flex-col justify-center">
+                                            <div className="p-5 sm:p-7 md:p-9 flex-1 flex flex-col justify-center">
                                                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-tighter text-black mb-2 md:mb-4 leading-none">
                                                     {card.title}
                                                 </h3>

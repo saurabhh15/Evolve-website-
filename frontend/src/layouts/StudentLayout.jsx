@@ -154,14 +154,14 @@ const StudentLayout = ({ children }) => {
   });
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[#050505] text-white relative flex flex-col overflow-x-hidden">
 
       {/* Ambient glows */}
       <div className="fixed -top-32 -left-32 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#e87315]/[0.02] rounded-full blur-[100px] pointer-events-none" />
       <div className="fixed -bottom-48 -right-48 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#e87315]/[0.01] rounded-full blur-[100px] pointer-events-none" />
 
       {/* ── TOP NAV ── */}
-      <nav className="sticky top-0 z-50 bg-[#080808]/80 backdrop-blur-xl border-b border-white/[0.03]">
+      <nav className="sticky top-0 z-[100] bg-[#080808]/90 backdrop-blur-xl border-b border-white/[0.03] w-full">
         <div className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
 
           {/* Brand */}
@@ -249,7 +249,7 @@ const StudentLayout = ({ children }) => {
 
               {/* Notif Dropdown */}
               {notifOpen && (
-                <div className="absolute right-0 top-12 sm:top-14 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-[#101010] border border-white/[0.06] rounded-2xl shadow-2xl z-50 overflow-hidden">
+                <div className="absolute right-0 top-12 sm:top-14 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-[#101010] border border-white/[0.06] rounded-2xl shadow-2xl z-[110] overflow-hidden">
                   <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 bg-white/[0.01]">
                     <div className="flex items-center gap-3">
                       <div className={`w-1.5 h-1.5 rotate-45 ${unreadCount > 0 ? 'bg-[#e87315] shadow-[0_0_8px_#e87315]' : 'bg-white/10'}`} />
@@ -276,7 +276,7 @@ const StudentLayout = ({ children }) => {
                     </div>
                   </div>
 
-                  <div className="max-h-72 sm:max-h-96 overflow-y-auto scrollbar-hide bg-[#080808]">
+                  <div className="max-h-[60vh] sm:max-h-96 overflow-y-auto scrollbar-hide bg-[#080808]">
                     {notifLoading ? (
                       <div className="flex flex-col items-center justify-center py-16 gap-4">
                         <div className="relative w-8 h-8">
@@ -355,10 +355,9 @@ const StudentLayout = ({ children }) => {
                         {!notifications.requests?.length && !notifications.notifs?.length && (
                           <div className="flex flex-col items-center justify-center py-16 px-8 text-center opacity-20">
                             <div className="w-10 h-10 border border-white/20 flex items-center justify-center rotate-45 mb-6">
-                              <Bell size={16} className="-rotate-45 text-amber-700" />
+                              <Bell size={16} className="-rotate-45" />
                             </div>
                             <p className="text-[10px] text-white font-black uppercase tracking-[0.4em]">No notifications</p>
-                            <p className="text-[8px] text-white uppercase tracking-widest mt-2">No active data streams</p>
                           </div>
                         )}
                       </>
@@ -367,7 +366,7 @@ const StudentLayout = ({ children }) => {
 
                   <div
                     onClick={() => { setNotifOpen(false); navigate('/dashboard/notifications'); }}
-                    className="relative px-6 py-3 border-t border-white/10 cursor-pointer overflow-hidden group bg-transparent transition-all duration-500 hover:bg-[#e87315]/[0.02]"
+                    className="relative px-6 py-3 border-t border-white/10 cursor-pointer overflow-hidden group bg-[#080808] hover:bg-[#e87315]/[0.02] transition-all duration-500"
                   >
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-2 bg-[#e87315]/40 group-hover:h-full transition-all duration-500" />
                     <div className="flex items-center justify-center gap-3">
@@ -433,16 +432,16 @@ const StudentLayout = ({ children }) => {
         </div>
 
         {/* Mobile dropdown */}
-        <div className={`md:hidden absolute top-full left-0 w-full bg-[#080808] border-b border-white/5 overflow-hidden transition-all duration-500 ease-in-out z-50 ${isMobileMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className={`md:hidden absolute top-full left-0 w-full bg-[#080808] border-b border-white/5 overflow-hidden transition-all duration-500 ease-in-out z-50 ${isMobileMenuOpen ? 'max-h-[85dvh] opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
             style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-          <div className="relative p-3 flex flex-col gap-1">
+          <div className="relative p-3 flex flex-col gap-1 bg-[#080808]">
             {/* Mobile profile row */}
             <Link
               to="/dashboard/myprofile"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 mb-1 border border-white/5 hover:border-[#e87315]/30 transition-colors group"
+              className="flex items-center gap-3 px-4 py-3 mb-1 border border-white/5 hover:border-[#e87315]/30 transition-colors group bg-[#0a0a0a]"
             >
               <div className="w-9 h-9 overflow-hidden border border-white/10 shrink-0">
                 {user?.profileImage ? (
@@ -505,18 +504,18 @@ const StudentLayout = ({ children }) => {
       </nav>
 
       {/* Main content */}
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-6 sm:pt-8">
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
         {children}
       </main>
 
       {/* ── CONNECTIONS MODAL ── */}
       {connectionsOpen && (
         <div
-          className="fixed inset-0 bg-[#050505]/90 backdrop-blur-md z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all"
+          className="fixed inset-0 bg-[#050505]/90 backdrop-blur-md z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all"
           onClick={() => setConnectionsOpen(false)}
         >
           <div
-            className="bg-[#080808] border border-white/10 w-full sm:max-w-md max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-[0_0_50px_rgba(0,0,0,1)] relative overflow-hidden rounded-t-2xl sm:rounded-none"
+            className="bg-[#080808] border border-white/10 w-full sm:max-w-md max-h-[85dvh] sm:max-h-[85vh] flex flex-col shadow-[0_0_50px_rgba(0,0,0,1)] relative overflow-hidden rounded-t-2xl sm:rounded-2xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
@@ -527,7 +526,7 @@ const StudentLayout = ({ children }) => {
               <div className="w-10 h-1 bg-white/10 rounded-full" />
             </div>
 
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 relative z-10">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 relative z-10 bg-[#080808]">
               <div>
                 <h3 className="text-xs font-black text-white uppercase tracking-[0.3em] italic">Network</h3>
                 <div className="flex items-center gap-2 mt-1">
@@ -542,7 +541,7 @@ const StudentLayout = ({ children }) => {
               </button>
             </div>
 
-            <div className="px-6 py-4 border-b border-white/5 bg-white/[0.01] space-y-3 relative z-10">
+            <div className="px-6 py-4 border-b border-white/5 bg-[#0a0a0a] space-y-3 relative z-10">
               <div className="relative">
                 <input
                   type="text"
@@ -568,7 +567,7 @@ const StudentLayout = ({ children }) => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1 relative z-10">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 relative z-10 bg-[#080808]">
               {connectionsLoading ? (
                 <div className="p-6 space-y-3">
                   {[1, 2, 3].map(i => <div key={i} className="h-14 bg-white/[0.02] border border-white/5 animate-pulse" />)}

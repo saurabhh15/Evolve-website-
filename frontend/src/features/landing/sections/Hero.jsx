@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 
 class PerlinNoise {
   constructor() {
@@ -42,14 +42,18 @@ const FLOAT_TAGS = [
 ];
 
 const STATS = [
-  { value: "20+", label: "Students" },
-  { value: "5+", label: "Startups" },
-  { value: "$2M+", label: "Raised" },
+  { value: "0", label: "Students" },
+  { value: "0", label: "Startups" },
+  { value: "$0", label: "Raised" },
 ];
 
 const Counter = ({ value }) => {
+  const ref = useRef(null);
+  // Ensures animation only fires once the numbers are actually in the viewport
+  const isInView = useInView(ref, { once: true, margin: "0px" });
+  
   const count = useMotionValue(0);
-  const numericValue = parseInt(value.replace(/[^0-9]/g, ""), 10);
+  const numericValue = parseInt(value.replace(/[^0-9]/g, ""), 10) || 0;
   
   const displayValue = useTransform(count, (latest) => {
     const num = Math.round(latest);
@@ -60,11 +64,21 @@ const Counter = ({ value }) => {
   });
 
   useEffect(() => {
-    const controls = animate(count, numericValue, { duration: 2, ease: "easeOut" });
-    return controls.stop;
-  }, [numericValue, count]);
+    if (isInView) {
+      // If the real value is 0, start the animation at 50 and count down to 0 
+      // so it still has a cool visual effect without showing fake data.
+      // Otherwise, start at 0 and count up.
+      count.set(numericValue === 0 ? 50 : 0);
+      
+      const controls = animate(count, numericValue, { 
+        duration: 2, 
+        ease: "easeOut" 
+      });
+      return () => controls.stop();
+    }
+  }, [numericValue, count, isInView]);
   
-  return <motion.div>{displayValue}</motion.div>;
+  return <motion.div ref={ref}>{displayValue}</motion.div>;
 };
 
 const Hero = ({ scrollY = 0, menuOpen = false }) => {
@@ -183,8 +197,8 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
         const y = h * (orb.y + ny * 0.25) + my * 250 * depth;
         const scale = 1 + Math.sin(state.breathing + i) * 0.15;
         
-        // Keeps orbs slightly smaller on mobile so text is easier to read
-        const mobileScale = isMobile ? 0.75 : 1;
+        // Slightly increased mobile scale to ensure colors don't vanish
+        const mobileScale = isMobile ? 0.9 : 1;
         const r = Math.max(w, h) * orb.baseSize * scale * mobileScale;
 
         const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -219,7 +233,8 @@ const Hero = ({ scrollY = 0, menuOpen = false }) => {
         ref={canvasRef}
         className="fixed inset-0 z-0 pointer-events-none"
         style={{
-          filter: `blur(${120 + scrollY * 0.08}px) saturate(150%) contrast(110%)`,
+          // Reduced blur amount and slightly boosted saturation/contrast exclusively for mobile to prevent washout
+          filter: `blur(${isMobile ? 60 + scrollY * 0.04 : 120 + scrollY * 0.08}px) saturate(${isMobile ? 200 : 150}%) contrast(${isMobile ? 125 : 110}%)`,
           opacity: menuOpen ? 0.4 : 1,
           transition: 'opacity 0.5s ease',
         }}

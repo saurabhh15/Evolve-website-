@@ -24,14 +24,14 @@ const FAQItem = ({ faq, index, isActive, onToggle, isVisible }) => {
     return (
         <div className={`transform transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <div
-                className={`bg-white rounded-xl sm:rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer group ${isActive
+                className={`bg-white rounded-xl sm:rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer group relative z-10 ${isActive
                     ? 'border-[#F4442E]/30 shadow-lg shadow-[#F4442E]/10 scale-[1.01] sm:scale-[1.02]'
                     : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                     }`}
                 onClick={onToggle}
             >
                 {/* Question */}
-                <div className="flex items-center justify-between p-4 sm:p-6 md:p-7">
+                <div className="flex items-center justify-between p-4 sm:p-6 md:p-7 bg-white relative z-20">
                     {/* Added pr-4 to prevent text from bumping into the arrow on tiny screens */}
                     <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 pr-2 sm:pr-4">
                         <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-snug">
@@ -59,7 +59,7 @@ const FAQItem = ({ faq, index, isActive, onToggle, isVisible }) => {
                     opacity: isActive ? 1 : 0,
                     transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
                     overflow: 'hidden',
-                }}>
+                }} className="relative z-10 bg-white">
                     <div ref={answerRef} className="px-4 sm:px-6 md:px-7 pb-4 sm:pb-6 md:pb-7 pt-0">
                         <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
                             {faq.answer}
@@ -117,21 +117,23 @@ const FAQSection = () => {
 
     return (
         <div className="relative bg-[#fffaf5] py-12 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
-            {/* Decorative ? — hidden on mobile */}
-            <div className="hidden md:block absolute top-[1%] -right-20 lg:-right-40 pointer-events-none z-0 select-none -rotate-35">
-                <svg viewBox="0 0 100 120" className="w-[400px] lg:w-[700px] h-auto">
+            
+            {/* Decorative ? — Now visible on mobile */}
+            <div className="absolute top-[2%] md:top-[1%] -right-10 sm:-right-20 lg:-right-40 pointer-events-none z-0 select-none -rotate-[35deg]">
+                <svg viewBox="0 0 100 120" className="w-[250px] sm:w-[400px] lg:w-[700px] h-auto opacity-60 md:opacity-100">
                     <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="none" stroke="#fde68a" strokeWidth="0.5"
                         style={{ fontSize: '120px', fontFamily: 'Helvetica', fontWeight: '900' }}>?</text>
                 </svg>
             </div>
-            <div className="hidden md:block absolute top-[45%] -left-20 pointer-events-none z-0 select-none rotate-25">
-                <svg viewBox="0 0 100 120" className="w-[400px] lg:w-[700px] h-auto">
+            
+            <div className="absolute top-[60%] md:top-[45%] -left-16 sm:-left-20 pointer-events-none z-0 select-none rotate-[25deg]">
+                <svg viewBox="0 0 100 120" className="w-[250px] sm:w-[400px] lg:w-[700px] h-auto opacity-30 md:opacity-100">
                     <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="none" stroke="#F4442E" strokeWidth="0.5"
                         style={{ fontSize: '120px', fontFamily: 'Helvetica', fontWeight: '900' }}>?</text>
                 </svg>
             </div>
 
-            <div className="relative z-10 max-w-3xl mx-auto">
+            <div className="relative z-20 max-w-3xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-10 sm:mb-12 md:mb-16 animate-fade-in-up">
                     <div className="inline-block mb-3 sm:mb-4">

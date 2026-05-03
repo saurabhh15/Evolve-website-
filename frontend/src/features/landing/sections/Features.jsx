@@ -73,59 +73,54 @@ const FEATURES = [
 const FeatureCard = ({ feature }) => {
   return (
     <div
-      className="flex flex-col md:flex-row items-stretch overflow-hidden relative w-full h-full"
-      style={{
-        background: feature.cardBg,
-        borderRadius: "2.5rem",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
-      }}
+      className="flex flex-col md:flex-row items-stretch overflow-hidden relative w-full h-full rounded-[1.5rem] md:rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.2)] md:shadow-[0_25px_60px_rgba(0,0,0,0.25)]"
+      style={{ background: feature.cardBg }}
     >
       {/* Subtle inner highlight */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none rounded-[1.5rem] md:rounded-[2.5rem]"
         style={{
           background: "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%)",
-          borderRadius: "2.5rem",
         }}
       />
 
-      {/* ── Text content ── */}
-      <div className="flex-1 flex flex-col justify-between relative p-5 sm:p-7 md:p-10 lg:p-14">
+      {/* ── Top/Left: Text content ── */}
+      <div className="flex-1 flex flex-col justify-center relative p-6 sm:p-8 md:p-12 lg:p-16">
         <div>
-          <div className="flex items-center gap-2.5 mb-3 md:mb-4">
-            <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
-              <feature.Icon className="text-white w-3.5 h-3.5 md:w-4 md:h-4" strokeWidth={2.5} />
+          <div className="flex items-center gap-3 mb-4 md:mb-5">
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+              <feature.Icon className="text-white w-4 h-4" strokeWidth={2.5} />
             </div>
-            <div className="h-[1px] w-6 bg-white/30" />
-            <span className="text-[0.58rem] md:text-[0.65rem] font-extrabold tracking-[0.2em] uppercase text-white/65">
+            <div className="h-[1px] w-8 bg-white/30" />
+            <span className="text-[0.6rem] md:text-[0.65rem] font-extrabold tracking-[0.22em] uppercase text-white/65">
               {feature.tag}
             </span>
           </div>
 
           <h3
-            className="font-black text-white leading-[1.08] mb-2.5 md:mb-4"
-            style={{ fontSize: "clamp(1.35rem, 4vw, 2.8rem)" }}
+            className="font-black text-white leading-[1.05] mb-3 md:mb-5"
+            style={{ fontSize: "clamp(1.6rem, 3.5vw, 3rem)" }}
           >
             {feature.title}
           </h3>
 
           <p
-            className="text-white/70 leading-relaxed mb-4 md:mb-6 max-w-[480px]"
-            style={{ fontSize: "clamp(0.8rem, 2vw, 1.05rem)" }}
+            className="text-white/70 leading-relaxed mb-6 md:mb-8 max-w-[480px]"
+            style={{ fontSize: "clamp(0.85rem, 1.5vw, 1.1rem)" }}
           >
             {feature.description}
           </p>
         </div>
 
-        <ul className="list-none p-0 m-0 flex flex-col gap-2 md:gap-3">
+        <ul className="list-none p-0 m-0 flex flex-col gap-2.5 md:gap-3.5">
           {feature.bullets.map((b, i) => (
-            <li key={i} className="flex items-center gap-2.5">
-              <span className="w-[16px] h-[16px] md:w-[20px] md:h-[20px] rounded-full bg-white/20 border border-white/25 flex items-center justify-center shrink-0">
-                <span className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-white block" />
+            <li key={i} className="flex items-center gap-3">
+              <span className="w-[18px] h-[18px] md:w-[20px] md:h-[20px] rounded-full bg-white/20 border border-white/25 flex items-center justify-center shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-white block" />
               </span>
               <span
                 className="text-white/90 font-medium"
-                style={{ fontSize: "clamp(0.75rem, 1.8vw, 0.95rem)" }}
+                style={{ fontSize: "clamp(0.8rem, 1.3vw, 1rem)" }}
               >
                 {b}
               </span>
@@ -134,27 +129,19 @@ const FeatureCard = ({ feature }) => {
         </ul>
       </div>
 
-      {/* ── Image panel ── */}
+      {/* ── Bottom/Right: Image panel ── */}
       <div
-        className="w-full md:w-[300px] lg:w-[360px] shrink-0 flex items-center justify-center relative overflow-hidden p-4 sm:p-5 md:p-6"
-        style={{
-          // On mobile: fixed height that fills nicely without overflowing card
-          height: "clamp(140px, 36vw, 220px)",
-          // On md+: auto height to fill the card
-          ...(typeof window !== 'undefined' && window.innerWidth >= 768 ? { height: 'auto' } : {}),
-          background: feature.imageBg,
-        }}
+        className="w-full md:w-[320px] lg:w-[380px] h-[180px] sm:h-[220px] md:h-auto shrink-0 flex flex-col items-center justify-center relative overflow-hidden p-4 sm:p-6 md:p-6"
+        style={{ background: feature.imageBg }}
       >
-        {/* Separator */}
-        <div className="absolute md:hidden top-0 left-[8%] w-[84%] h-[1px] bg-white/10" />
-        <div className="hidden md:block absolute left-0 top-[8%] h-[84%] w-[1px] bg-white/10" />
+        <div className="absolute md:hidden top-0 left-[10%] w-[80%] h-[1px] bg-white/10" />
+        <div className="hidden md:block absolute left-0 top-[10%] h-[80%] w-[1px] bg-white/10" />
 
-        <div className="w-full h-full rounded-[1.25rem] overflow-hidden">
+        <div className="w-full h-full rounded-[1rem] md:rounded-[1.25rem] flex items-center justify-center relative overflow-hidden bg-white/5">
           <img
             src={feature.image}
             alt={feature.title}
             className="w-full h-full object-cover block"
-            loading="lazy"
           />
         </div>
       </div>
@@ -175,7 +162,6 @@ const Features = () => {
         width: "100%",
       }}
     >
-      {/* Dot grid */}
       <div
         style={{
           position: "absolute",
@@ -187,10 +173,9 @@ const Features = () => {
         }}
       />
 
-      {/* Section header */}
       <div
-        className="relative text-center px-5 sm:px-6"
-        style={{ paddingTop: "60px", paddingBottom: "16px", zIndex: 2 }}
+        className="relative text-center px-6"
+        style={{ paddingTop: "80px", paddingBottom: "24px", zIndex: 2 }}
       >
         <motion.div
           initial={{ opacity: 0, y: 28 }}
@@ -198,32 +183,32 @@ const Features = () => {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div style={{ height: "1px", width: "40px", background: "linear-gradient(to right, transparent, #c17a3a)" }} />
+          <div className="flex items-center justify-center gap-4 mb-5">
+            <div style={{ height: "1px", width: "56px", background: "linear-gradient(to right, transparent, #c17a3a)" }} />
             <span
               style={{
-                fontSize: "0.6rem",
+                fontSize: "0.65rem",
                 fontWeight: 800,
-                letterSpacing: "0.25em",
+                letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: "#9a4a10",
                 border: "1px solid rgba(193,122,58,0.4)",
                 backgroundColor: "rgba(249,115,22,0.08)",
-                padding: "7px 16px",
+                padding: "8px 20px",
                 borderRadius: "999px",
               }}
             >
               Platform Features
             </span>
-            <div style={{ height: "1px", width: "40px", background: "linear-gradient(to left, transparent, #c17a3a)" }} />
+            <div style={{ height: "1px", width: "56px", background: "linear-gradient(to left, transparent, #c17a3a)" }} />
           </div>
 
           <h2
             style={{
               fontWeight: 900,
               letterSpacing: "-0.03em",
-              lineHeight: 1.05,
-              fontSize: "clamp(2rem, 7vw, 5.2rem)",
+              lineHeight: 1.0,
+              fontSize: "clamp(2.5rem, 6.5vw, 5.2rem)",
               color: "#1a0800",
               margin: "0 auto",
             }}
@@ -244,10 +229,10 @@ const Features = () => {
 
           <p
             style={{
-              fontSize: "clamp(0.9rem, 2.5vw, 1.15rem)",
-              marginTop: "16px",
-              maxWidth: "480px",
-              margin: "16px auto 0",
+              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              marginTop: "20px",
+              maxWidth: "520px",
+              margin: "20px auto 0",
               lineHeight: 1.7,
               color: "rgba(122,69,32,0.75)",
             }}
@@ -258,25 +243,23 @@ const Features = () => {
         </motion.div>
       </div>
 
-      {/* ScrollStack */}
       <div className="relative" style={{ zIndex: 2 }}>
         <ScrollStack
           useWindowScroll={true}
-          itemDistance={120}
-          itemScale={0.012}
-          itemStackDistance={24}
-          stackPosition="18%"
-          scaleEndPosition="10%"
-          baseScale={0.97}
+          itemDistance={160} 
+          itemScale={0.015}        
+          itemStackDistance={32}  
+          stackPosition="18%"     
+          scaleEndPosition="10%"  
+          baseScale={0.96}         
           blurAmount={0}
         >
           {FEATURES.map((feature) => (
             <ScrollStackItem
               key={feature.tag}
-              // No fixed height on mobile — let content breathe naturally
-              itemClassName="min-h-[360px] md:h-[480px]"
+              // Fixed mobile height: Taller on mobile (h-[560px]) to prevent text overflow, standard on desktop (md:h-[480px])
+              itemClassName="h-[560px] sm:h-[500px] md:h-[480px] lg:h-[500px]" 
               style={{
-                background: feature.cardBg,
                 willChange: "transform",
                 backfaceVisibility: "hidden",
                 transformStyle: "preserve-3d",

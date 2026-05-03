@@ -48,7 +48,8 @@ const SuccessPipeline = () => {
   ];
 
   return (
-    <div className="bg-white min-h-screen text-black font-sans selection:bg-orange-500 overflow-x-clip p-4 sm:p-6 md:p-12">
+    // Added pt-24 sm:pt-28 md:pt-32 to clear the fixed navbar
+    <div className="bg-white min-h-screen text-black font-sans selection:bg-orange-500 overflow-x-clip p-4 pt-24 sm:p-6 sm:pt-28 md:p-12 md:pt-32">
       {/* Editorial Header */}
       <div className="max-w-7xl mx-auto mb-12 md:mb-20 border-l-4 md:border-l-8 border-black pl-4 md:pl-8">
         <h1 className="text-5xl sm:text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none mt-4 md:mt-8">

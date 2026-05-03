@@ -3,7 +3,8 @@ import Lenis from 'lenis';
 
 export const ScrollStackItem = ({ children, itemClassName = '', style }) => (
   <div
-    className={`scroll-stack-card relative w-full my-6 p-0 rounded-[2.5rem] shadow-xl overflow-hidden box-border origin-top ${itemClassName}`.trim()}
+    // Updated border-radius to be fully responsive
+    className={`scroll-stack-card relative w-full my-6 p-0 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden box-border origin-top ${itemClassName}`.trim()}
     style={style}
   >
     {children}
@@ -35,13 +36,9 @@ const ScrollStack = ({
   const tickingRef = useRef(false);
   const isInitializedRef = useRef(false);
 
+  // Caching variables to prevent mobile address bar from ruining the scroll math
   const viewportHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 0);
   const windowWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 0);
-
-  // Detect mobile for adjusted stack behavior
-  const isMobile = useCallback(() => {
-    return typeof window !== 'undefined' && window.innerWidth < 768;
-  }, []);
 
   const stackPositionPx = useMemo(() => {
     if (typeof stackPosition === 'string' && stackPosition.includes('%')) {
@@ -92,12 +89,8 @@ const ScrollStack = ({
       void window.scrollY;
     }
 
-    // Only update viewport height on width changes to prevent mobile address bar glitch
-    if (typeof window !== 'undefined' && window.innerWidth !== windowWidthRef.current) {
-      viewportHeightRef.current = useWindowScroll ? window.innerHeight : scroller?.clientHeight || 0;
-    } else if (viewportHeightRef.current === 0) {
-      viewportHeightRef.current = useWindowScroll ? window.innerHeight : scroller?.clientHeight || 0;
-    }
+    // Freeze the height calculation so mobile address bar hides don't warp the stack position
+    viewportHeightRef.current = useWindowScroll ? window.innerHeight : scroller?.clientHeight || 0;
 
     const originalTransforms = [];
     cardsRef.current.forEach((card) => {
@@ -131,22 +124,15 @@ const ScrollStack = ({
     isUpdatingRef.current = true;
 
     const { scrollTop, containerHeight } = getScrollData();
-    
-    // On mobile use a larger stackPosition so cards pin lower (below any sticky nav)
-    const mobileStackOffset = isMobile() ? 0.22 : 0;
-    const effectiveStackPosPx = (stackPositionPx + mobileStackOffset) * containerHeight;
+    const stackPosPx = stackPositionPx * containerHeight;
     const scaleEndPosPx = scaleEndPositionPx * containerHeight;
     const cardCount = cardsRef.current.length;
 
-    // On mobile reduce itemStackDistance so stacked cards don't overlap too much
-    const effectiveStackDistance = isMobile()
-      ? Math.min(itemStackDistance, 22)
-      : itemStackDistance;
-
     const lastCardIndex = cardCount - 1;
     const lastCardTop = cardOffsetsRef.current[lastCardIndex] || 0;
-    const lastStackOffset = effectiveStackDistance * lastCardIndex;
-    const lastCardPinStart = lastCardTop - effectiveStackPosPx - lastStackOffset;
+    const lastStackOffset = itemStackDistance * lastCardIndex;
+    const lastCardPinStart = lastCardTop - stackPosPx - lastStackOffset;
+    
     const pinEnd = lastCardPinStart + itemDistance;
 
     for (let i = 0; i < cardCount; i++) {
@@ -154,8 +140,8 @@ const ScrollStack = ({
       if (!card) continue;
 
       const cardTop = cardOffsetsRef.current[i];
-      const stackOffset = effectiveStackDistance * i;
-      const triggerStart = cardTop - effectiveStackPosPx - stackOffset;
+      const stackOffset = itemStackDistance * i;
+      const triggerStart = cardTop - stackPosPx - stackOffset;
       const triggerEnd = cardTop - scaleEndPosPx;
       const pinStart = triggerStart;
 
@@ -169,8 +155,7 @@ const ScrollStack = ({
       if (blurAmount && i > 0) {
         let topCardIndex = 0;
         for (let j = 0; j < cardCount; j++) {
-          const jStackOffset = effectiveStackDistance * j;
-          const jTriggerStart = cardOffsetsRef.current[j] - effectiveStackPosPx - jStackOffset;
+          const jTriggerStart = cardOffsetsRef.current[j] - stackPosPx - itemStackDistance * j;
           if (scrollTop >= jTriggerStart) {
             topCardIndex = j;
           }
@@ -185,23 +170,24 @@ const ScrollStack = ({
       if (scrollTop < pinStart) {
         translateY = 0;
       } else if (scrollTop >= pinStart && scrollTop <= pinEnd) {
-        translateY = scrollTop - cardTop + effectiveStackPosPx + stackOffset;
+        translateY = scrollTop - cardTop + stackPosPx + stackOffset;
       } else {
-        translateY = pinEnd - cardTop + effectiveStackPosPx + stackOffset;
+        translateY = pinEnd - cardTop + stackPosPx + stackOffset;
       }
 
       const newTransform = {
-        translateY,
-        scale,
-        rotation,
-        blur
+        translateY: translateY,
+        scale: scale,
+        rotation: rotation,
+        blur: blur
       };
 
       const lastTransform = lastTransformsRef.current.get(i);
 
+      // FIX: Lowered the translateY threshold from 0.05 to 0.01 for buttery smooth mobile tracking
       const hasChanged =
         !lastTransform ||
-        Math.abs(lastTransform.translateY - newTransform.translateY) > 0.05 ||
+        Math.abs(lastTransform.translateY - newTransform.translateY) > 0.01 ||
         Math.abs(lastTransform.scale - newTransform.scale) > 0.001 ||
         Math.abs(lastTransform.rotation - newTransform.rotation) > 0.01 ||
         Math.abs(lastTransform.blur - newTransform.blur) > 0.01;
@@ -235,7 +221,7 @@ const ScrollStack = ({
   }, [
     itemScale, itemStackDistance, stackPositionPx, scaleEndPositionPx,
     baseScale, rotationAmount, blurAmount, itemDistance,
-    onStackComplete, calculateProgress, getScrollData, isMobile
+    onStackComplete, calculateProgress, getScrollData
   ]);
 
   const requestTick = useCallback(() => {
@@ -249,29 +235,25 @@ const ScrollStack = ({
     requestTick();
   }, [requestTick]);
 
+  const handleWindowScroll = useCallback(() => {
+    // Separate listener specifically for window to ensure it fires smoothly
+    requestTick();
+  }, [requestTick]);
+
   const setupLenis = useCallback(() => {
-    const lenisConfig = {
-      duration: 1.2,
-      easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      lerp: 0.1,
-      // On mobile, don't override native touch scroll — it fights iOS momentum
-      smoothTouch: false,
-      touchMultiplier: 1,
-    };
-
+    // FIX: If we are using window scroll, DO NOT create a new Lenis instance.
+    // The main app already has a global Lenis instance. Creating a second one causes
+    // them to fight each other and creates the "sackness"/shakiness on mobile.
     if (useWindowScroll) {
-      const lenis = new Lenis(lenisConfig);
-      lenis.on('scroll', handleScroll);
-
-      const raf = (time) => {
-        lenis.raf(time);
+      window.addEventListener('scroll', handleWindowScroll, { passive: true });
+      
+      // Keep an animation frame looping to ensure we catch every micro-movement
+      const raf = () => {
+        requestTick();
         animationFrameRef.current = requestAnimationFrame(raf);
       };
-
       animationFrameRef.current = requestAnimationFrame(raf);
-      lenisRef.current = lenis;
+      
     } else {
       const scroller = scrollerRef.current;
       if (!scroller) return;
@@ -280,9 +262,13 @@ const ScrollStack = ({
       if (!content) return;
 
       const lenis = new Lenis({
-        ...lenisConfig,
+        duration: 1.2,
+        easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        lerp: 0.1,
         wrapper: scroller,
-        content,
+        content: content,
       });
 
       lenis.on('scroll', handleScroll);
@@ -295,11 +281,11 @@ const ScrollStack = ({
       animationFrameRef.current = requestAnimationFrame(raf);
       lenisRef.current = lenis;
     }
-  }, [handleScroll, useWindowScroll]);
+  }, [handleScroll, handleWindowScroll, requestTick, useWindowScroll]);
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (!scroller && !useWindowScroll) return;
 
     isInitializedRef.current = false;
 
@@ -326,7 +312,7 @@ const ScrollStack = ({
 
     const waitForImages = () => {
       return new Promise((resolve) => {
-        const images = scroller.querySelectorAll('img');
+        const images = (useWindowScroll ? document : scroller).querySelectorAll('img');
         if (images.length === 0) { resolve(); return; }
 
         let loadedCount = 0;
@@ -351,7 +337,7 @@ const ScrollStack = ({
 
     const initializeScrollStack = async () => {
       await waitForImages();
-      void scroller.offsetHeight;
+      if (!useWindowScroll) void scroller.offsetHeight;
       cacheCardOffsets();
       await new Promise(resolve => requestAnimationFrame(resolve));
       cacheCardOffsets();
@@ -359,29 +345,22 @@ const ScrollStack = ({
       await new Promise(resolve => requestAnimationFrame(resolve));
       isInitializedRef.current = true;
       updateCardTransforms();
-      // Extra settle pass — mobile fonts/images can shift layout after first paint
       setTimeout(() => {
         cacheCardOffsets();
         updateCardTransforms();
-      }, 150);
-      setTimeout(() => {
-        cacheCardOffsets();
-        updateCardTransforms();
-      }, 500);
+      }, 100);
     };
 
     initializeScrollStack();
 
     let resizeTimeout;
     const handleResize = () => {
-      // Ignore pure vertical resize (mobile address bar show/hide)
+      // Fix: Strictly ignore vertical resizes so mobile scroll doesn't glitch the cards!
       if (typeof window !== 'undefined' && window.innerWidth === windowWidthRef.current) {
-        return;
+        return; 
       }
       if (typeof window !== 'undefined') {
         windowWidthRef.current = window.innerWidth;
-        // Update frozen viewport height on real width change
-        viewportHeightRef.current = useWindowScroll ? window.innerHeight : scrollerRef.current?.clientHeight || 0;
       }
 
       clearTimeout(resizeTimeout);
@@ -397,25 +376,11 @@ const ScrollStack = ({
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    // Also listen to orientationchange for tablets/phones
-    const handleOrientation = () => {
-      setTimeout(() => {
-        viewportHeightRef.current = useWindowScroll ? window.innerHeight : scrollerRef.current?.clientHeight || 0;
-        windowWidthRef.current = window.innerWidth;
-        isInitializedRef.current = false;
-        cacheCardOffsets();
-        requestAnimationFrame(() => {
-          isInitializedRef.current = true;
-          updateCardTransforms();
-        });
-      }, 300);
-    };
-
-    window.addEventListener('orientationchange', handleOrientation);
-
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleOrientation);
+      if (useWindowScroll) {
+        window.removeEventListener('scroll', handleWindowScroll);
+      }
       if (resizeTimeout) clearTimeout(resizeTimeout);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (lenisRef.current) lenisRef.current.destroy();
@@ -428,7 +393,7 @@ const ScrollStack = ({
       isUpdatingRef.current = false;
       tickingRef.current = false;
     };
-  }, [itemDistance, useWindowScroll, setupLenis, updateCardTransforms, cacheCardOffsets]);
+  }, [itemDistance, useWindowScroll, setupLenis, updateCardTransforms, cacheCardOffsets, handleWindowScroll]);
 
   const containerClassName = useWindowScroll
     ? `relative w-full ${className}`.trim()
@@ -444,9 +409,9 @@ const ScrollStack = ({
         ...(useWindowScroll ? {} : { scrollBehavior: 'auto' })
       }}
     >
-      <div className="scroll-stack-inner pt-[4vh] md:pt-[10vh] px-3 sm:px-4 md:px-6 pb-16 md:pb-24">
+      <div className="scroll-stack-inner pt-[6vh] md:pt-[10vh] px-3 sm:px-4 md:px-6 pb-16 md:pb-24 max-w-7xl mx-auto">
         {children}
-        <div className="scroll-stack-end w-full h-[30vh] md:h-[60vh]" />
+        <div className="scroll-stack-end w-full h-[40vh] md:h-[60vh]" />
       </div>
     </div>
   );
