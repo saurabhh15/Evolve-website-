@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // ── Mentor-specific fields ──
+  // --- Mentor-specific fields ---
   company: {
     type: String,
     default: 'FreeLancer'

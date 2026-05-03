@@ -19,6 +19,7 @@ if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // --- CORS Configuration ---
@@ -104,6 +105,11 @@ app.get('/health', (req, res) => {
     db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     uptime: process.uptime(),
   });
+});
+
+// Cold Start Fix endpoint for cron-job.org / UptimeRobot
+app.get('/api/health', (req, res) => {
+  res.status(200).send('Server is awake');
 });
 
 // --- Routes ---
