@@ -21,20 +21,17 @@ const Footer = () => {
     const rect = footerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    // Set CSS variables directly on the footer element
     footerRef.current.style.setProperty("--mouse-x", `${x}px`);
     footerRef.current.style.setProperty("--mouse-y", `${y}px`);
-
     if (!glowVisible) setGlowVisible(true);
   };
 
   const handleMouseLeave = () => setGlowVisible(false);
 
-  // Removed the 'PLATFORM' section as requested
   const linkGroups = [
     {
       title: "COMPANY",
+      mobileHidden: true,
       links: [
         { name: "About Us", href: "/about" },
         { name: "Success Stories", href: "/success-stories" },
@@ -77,7 +74,7 @@ const Footer = () => {
     >
       {/* Mouse-tracking glow */}
       <div
-        className="absolute rounded-full pointer-events-none z-0 hidden md:block" 
+        className="absolute rounded-full pointer-events-none z-0 hidden md:block"
         style={{
           width: "700px",
           height: "450px",
@@ -115,12 +112,12 @@ const Footer = () => {
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full pt-16 md:pt-1">
-        
+
         {/* Title Container */}
         <div ref={titleRef} className="flex justify-center w-full mb-12 md:mb-10 overflow-hidden">
           <h1
             style={{
-              fontSize: "clamp(4.5rem, 18vw, 20rem)", 
+              fontSize: "clamp(4.5rem, 18vw, 20rem)",
               fontWeight: "bold",
               display: "flex",
               justifyContent: "center",
@@ -136,7 +133,6 @@ const Footer = () => {
             >
               E
             </motion.span>
-
             <motion.span
               initial={{ y: 50, opacity: 0 }}
               animate={titleInView ? { y: 0, opacity: 1 } : {}}
@@ -145,7 +141,6 @@ const Footer = () => {
             >
               v
             </motion.span>
-
             <motion.span
               initial={{ y: 50, opacity: 0 }}
               animate={titleInView ? { y: 0, opacity: 1 } : {}}
@@ -154,7 +149,6 @@ const Footer = () => {
             >
               olv
             </motion.span>
-
             <motion.span
               initial={{ y: 50, opacity: 0 }}
               animate={titleInView ? { y: 0, opacity: 1 } : {}}
@@ -166,11 +160,12 @@ const Footer = () => {
           </h1>
         </div>
 
-        {/* Adjusted Grid: 3 columns instead of 4, evenly spaced */}
+        {/* Grid: 2 cols on mobile (RESOURCES + CONNECT), 3 cols on desktop */}
         <div ref={gridRef} className="relative grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-10 md:gap-12 mb-16 md:mb-20 max-w-5xl mx-auto">
           {linkGroups.map((group, idx) => (
             <motion.div
               key={group.title}
+              className={group.mobileHidden ? "hidden md:block" : ""}
               initial={{ opacity: 0, y: 40 }}
               animate={gridInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: idx * 0.12, ease: [0.22, 1, 0.36, 1] }}
@@ -259,7 +254,7 @@ const Footer = () => {
 
           {/* Location / Brand Tag */}
           <div className="md:flex-1 flex justify-center md:justify-end mt-2 md:mt-0 w-full">
-            <motion.p 
+            <motion.p
               whileHover={{ color: "#f97316", scale: 0.95 }}
               transition={{ duration: 0.3 }}
               className="text-white/50 text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase cursor-default"

@@ -4,7 +4,6 @@ import ScrollToTop from './components/ScrollToTop';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import useLenis from './hooks/useLenis';
-
 // Lazy loading all route components to significantly improve initial page load speed
 const Landing = lazy(() => import('./pages/Landing'));
 const Onboarding = lazy(() => import("./pages/OnboardingProtocol.jsx"));
