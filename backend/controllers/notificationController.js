@@ -12,7 +12,8 @@ exports.getNotifications = async (req, res, next) => {
       .populate('project', 'title')
       .populate('comment', 'content')
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(50)
+      .lean(); // Optimization added here
 
     res.json(notifications);
   } catch (error) {

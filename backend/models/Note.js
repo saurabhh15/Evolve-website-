@@ -4,12 +4,14 @@ const noteSchema = new mongoose.Schema({
   mentor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true // Added to quickly fetch all notes written by a specific mentor
   },
   mentee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true // Added to quickly fetch all notes written about a specific mentee
   },
   content: {
     type: String,

@@ -96,7 +96,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 // --- Base & Health Check Routes ---
 app.get('/', (req, res) => {
-  res.json({ message: 'Evolve API running', version: '2.0.0' });
+  res.json({ message: 'Evolve API running', version: '1.0.0' });
 });
 
 app.get('/health', (req, res) => {

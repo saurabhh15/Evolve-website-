@@ -1,20 +1,22 @@
-// backend/models/Connection.js
 const mongoose = require('mongoose');
 
 const connectionSchema = new mongoose.Schema({
   from: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   to: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project'
+    ref: 'Project',
+    index: true
   },
   type: {
     type: String,
@@ -24,7 +26,8 @@ const connectionSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending', 'accepted', 'rejected'],
-    default: 'pending'
+    default: 'pending',
+    index: true
   },
   message: String
 }, {

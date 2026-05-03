@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
@@ -19,12 +18,14 @@ const projectSchema = new mongoose.Schema({
   category: {
     type: String,
     enum: ['AI/ML', 'Web Dev', 'Mobile App', 'IoT', 'Blockchain', 'HealthTech', 'EdTech', 'FinTech', 'Other'],
-    required: true
+    required: true,
+    index: true
   },
   stage: {
     type: String,
     enum: ['idea', 'prototype', 'mvp', 'launched'],
-    default: 'idea'
+    default: 'idea',
+    index: true
   },
   teamSize: {
     type: Number,
@@ -41,7 +42,8 @@ const projectSchema = new mongoose.Schema({
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   teamMembers: [{
     type: mongoose.Schema.Types.ObjectId,

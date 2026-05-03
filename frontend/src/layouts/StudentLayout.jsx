@@ -355,9 +355,10 @@ const StudentLayout = ({ children }) => {
                         {!notifications.requests?.length && !notifications.notifs?.length && (
                           <div className="flex flex-col items-center justify-center py-16 px-8 text-center opacity-20">
                             <div className="w-10 h-10 border border-white/20 flex items-center justify-center rotate-45 mb-6">
-                              <Bell size={16} className="-rotate-45" />
+                              <Bell size={16} className="-rotate-45 text-amber-700" />
                             </div>
                             <p className="text-[10px] text-white font-black uppercase tracking-[0.4em]">No notifications</p>
+                            <p className="text-[8px] text-white uppercase tracking-widest mt-2">No active data streams</p>
                           </div>
                         )}
                       </>
@@ -590,15 +591,13 @@ const StudentLayout = ({ children }) => {
                       <p className="text-[11px] font-black text-white group-hover:text-[#e87315] transition-colors uppercase tracking-wider truncate">{connection.name}</p>
                       <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest italic">{connection.role || 'Member'}</p>
                     </div>
-                    <div className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 border border-white/5 text-white/20 group-hover:border-[#e87315]/30 group-hover:text-[#e87315] transition-all shrink-0">
-                      View
-                    </div>
+                    <div className="text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 border border-white/5 text-white/20 group-hover:border-[#e87315]/30 group-hover:text-[#e87315] transition-all shrink-0">View</div>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-center opacity-20">
                   <div className="w-10 h-10 border border-white/20 flex items-center justify-center rotate-45 mb-6">
-                    <Users size={16} className="-rotate-45" />
+                    <Users size={16} className="-rotate-45 text-amber-800" />
                   </div>
                   <p className="text-[10px] text-white font-black uppercase tracking-[0.4em]">Nothing Here</p>
                 </div>

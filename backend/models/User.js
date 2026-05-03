@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, // unique automatically creates an index
     lowercase: true
   },
   password: {
@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['Student', 'Mentor', 'Investor', null],
-    default: null
+    default: null,
+    index: true // Added so you can quickly query "Find all Mentors" or "Find all Students"
   },
   bio: {
     type: String,
@@ -64,7 +65,8 @@ const userSchema = new mongoose.Schema({
   category: {
     type: String,
     enum: ['Engineering', 'Product & Design', 'Business & Growth'],
-    default: null
+    default: null,
+    index: true // Added so you can quickly filter mentors by category
   },
   rating: {
     type: Number,

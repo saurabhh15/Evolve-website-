@@ -33,7 +33,8 @@ exports.getAllProjects = async (req, res, next) => {
     const projects = await Project.find()
       .populate('creator', 'name role college profileImage')
       .sort({ createdAt: -1 })
-      .limit(100); // Prevent loading too many at once
+      .limit(100) // Prevent loading too many at once
+      .lean(); // Optimization added here
 
     res.json(projects);
   } catch (error) {
@@ -86,7 +87,8 @@ exports.searchProjects = async (req, res, next) => {
     const projects = await Project.find(query)
       .populate('creator', 'name role college profileImage')
       .sort({ createdAt: -1 })
-      .limit(100);
+      .limit(100)
+      .lean(); // Optimization added here
 
     res.json(projects);
   } catch (error) {
@@ -108,7 +110,8 @@ exports.getProjectById = async (req, res, next) => {
       { new: true }
     )
       .populate('creator', 'name role college profileImage bio linkedIn github')
-      .populate('teamMembers', 'name role profileImage');
+      .populate('teamMembers', 'name role profileImage')
+      .lean(); // Optimization added here
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -238,7 +241,8 @@ exports.toggleLike = async (req, res, next) => {
 exports.getMyProjects = async (req, res, next) => {
   try {
     const projects = await Project.find({ creator: req.user.userId })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization added here
 
     res.json(projects);
   } catch (error) {

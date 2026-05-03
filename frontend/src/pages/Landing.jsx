@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import Features from '../features/landing/sections/Features';
-import Progress from '../features/landing/sections/Progress';
-import UseCases from '../features/landing/sections/UseCases';
-import FAQ from '../features/landing/sections/FAQ';
-import CTA from '../features/landing/sections/CTA';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { getLenis } from '../hooks/useLenis';
 import Hero from '../features/landing/sections/Hero';
+
+// Lazy load the heavy visual sections below the fold
+const Features = lazy(() => import('../features/landing/sections/Features'));
+const Progress = lazy(() => import('../features/landing/sections/Progress'));
+const UseCases = lazy(() => import('../features/landing/sections/UseCases'));
+const FAQ = lazy(() => import('../features/landing/sections/FAQ'));
+const CTA = lazy(() => import('../features/landing/sections/CTA'));
 
 const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -29,13 +31,17 @@ const LandingPage = () => {
     // Kept overflow unhidden as requested so Progress/Sticky sections work
     <div className="relative min-h-[100dvh] text-white">  
       <Hero scrollY={scrollY} menuOpen={menuOpen} />
-      <Features />
-      <div className="relative z-20">
-        <Progress scrollY={scrollY} />
-        <UseCases scrollY={scrollY} />
-        <FAQ scrollY={scrollY} />
-        <CTA scrollY={scrollY} />
-      </div>
+      
+      {/* Wrap lazy loaded components in Suspense */}
+      <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center" />}>
+        <Features />
+        <div className="relative z-20">
+          <Progress scrollY={scrollY} />
+          <UseCases scrollY={scrollY} />
+          <FAQ scrollY={scrollY} />
+          <CTA scrollY={scrollY} />
+        </div>
+      </Suspense>
     </div>
   );
 };

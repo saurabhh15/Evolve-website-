@@ -62,7 +62,8 @@ exports.getConversation = async (req, res, next) => {
     })
       .sort({ createdAt: 1 }) // Oldest first (chronological order)
       .populate('sender', 'name profileImage')
-      .populate('recipient', 'name profileImage');
+      .populate('recipient', 'name profileImage')
+      .lean(); // Optimization added here
 
     // Mark messages as read (if current user is recipient)
     await Message.updateMany(
@@ -99,7 +100,8 @@ exports.getAllConversations = async (req, res, next) => {
     })
       .sort({ createdAt: -1 })
       .populate('sender', 'name profileImage')
-      .populate('recipient', 'name profileImage');
+      .populate('recipient', 'name profileImage')
+      .lean(); // Optimization added here
 
     // Group messages by conversation partner
     const conversationMap = new Map();

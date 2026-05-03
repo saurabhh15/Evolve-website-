@@ -4,7 +4,8 @@ const learningGoalSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true // Added to quickly fetch goals for a specific user
   },
   skill: {
     type: String,

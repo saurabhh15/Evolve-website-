@@ -5,7 +5,7 @@ exports.getNotes = async (req, res, next) => {
     const notes = await Note.find({
       mentor: req.user.userId,
       mentee: req.params.menteeId
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean(); // Optimization added here
     res.json(notes);
   } catch (error) {
     next(error);

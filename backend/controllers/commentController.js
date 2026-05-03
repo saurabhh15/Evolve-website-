@@ -11,7 +11,8 @@ exports.getComments = async (req, res, next) => {
   try {
     const comments = await Comment.find({ project: req.params.id })
       .populate('author', 'name role profileImage college')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization added here
 
     res.json(comments);
   } catch (error) {

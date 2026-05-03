@@ -7,7 +7,7 @@ const User = require('../models/User');
  */
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select('-password').lean(); // Optimization added here
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -47,7 +47,7 @@ exports.updateProfile = async (req, res, next) => {
       req.user.userId,
       updates,
       { new: true, runValidators: true }
-    ).select('-password');
+    ).select('-password').lean(); // Optimization added here
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -96,7 +96,8 @@ exports.searchUsers = async (req, res, next) => {
     const users = await User.find(query)
       .select('-password')
       .limit(50)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization added here
     
     res.json(users);
   } catch (error) {
@@ -122,7 +123,8 @@ exports.getMentors = async (req, res, next) => {
     
     const mentors = await User.find(query)
       .select('-password')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization added here
     
     res.json(mentors);
   } catch (error) {
@@ -141,7 +143,8 @@ exports.getUserProjects = async (req, res, next) => {
     
     const projects = await Project.find({ creator: req.params.id })
       .populate('creator', 'name role')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization added here
     
     res.json(projects);
   } catch (error) {

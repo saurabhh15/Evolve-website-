@@ -4,12 +4,14 @@ const commentSchema = new mongoose.Schema({
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: true
+    required: true,
+    index: true // Added for fast loading on project pages
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true // Added for fast filtering by user
   },
   content: {
     type: String,
