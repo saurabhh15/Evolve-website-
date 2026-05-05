@@ -5,14 +5,13 @@ const jwt = require('jsonwebtoken');
 // REGISTER
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body; // Keep registration simple
+    const { name, email, password } = req.body; 
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Explicitly defining salt rounds to 10 to prevent blocking the Node.js event loop
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -36,8 +35,10 @@ exports.register = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        hasCompletedOnboarding: user.hasCompletedOnboarding, // NEW: Needed for Gatekeeper
-        role: user.role
+        hasCompletedOnboarding: user.hasCompletedOnboarding, 
+        role: user.role,
+        gender: user.gender,
+        profileImage: user.profileImage
       }
     });
 
@@ -73,8 +74,10 @@ exports.login = async (req, res, next) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        hasCompletedOnboarding: user.hasCompletedOnboarding, // NEW: Needed for Gatekeeper
-        role: user.role
+        hasCompletedOnboarding: user.hasCompletedOnboarding, 
+        role: user.role,
+        gender: user.gender,
+        profileImage: user.profileImage
       }
     });
 
@@ -83,15 +86,14 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// GET ME (Used to verify session on refresh)
+// GET ME
 exports.getMe = async (req, res, next) => {
   try {
-    // req.user.userId comes from your auth middleware
     const user = await User.findById(req.user.userId).select('-password');
     
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json(user); // This will naturally include hasCompletedOnboarding now
+    res.json(user); 
   } catch (error) {
     next(error);
   }
@@ -100,36 +102,55 @@ exports.getMe = async (req, res, next) => {
 // COMPLETE ONBOARDING
 exports.completeOnboarding = async (req, res, next) => {
   try {
-    const { role, onboardingData, college, location, skills } = req.body;
+    console.log(" ONBOARDING API HIT");
+    console.log("BODY:", req.body);
 
-    console.log('Completing onboarding for user:', req.user.userId);
-    console.log('Received data:', { role, college, location, skills, onboardingData });
+    const userId = req.user?.userId;
 
-    // Find user and update profile
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.userId,
-      {
-        role,
-        onboardingData,
-        college,
-        location,
-        skills,
-        hasCompletedOnboarding: true // THE KEY FLAG
-      },
-      { new: true } 
-    ).select('-password'); 
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid token" });
     }
 
-    console.log('User updated successfully:', updatedUser.email);
+    // SAFE EXTRACTION
+    const role = req.body.role?.toLowerCase() || "student";
+    const gender = req.body.gender?.toLowerCase();
+
+    const college = req.body.college || "Not specified";
+    const skills = Array.isArray(req.body.skills) ? req.body.skills : [];
+
+    console.log("EXTRACTED GENDER:", gender);
+
+    //  FORCE IMAGE SET
+    let profileImage = "";
+
+    if (gender === "female") {
+      profileImage = "/female.jpg";
+    } else if (gender === "male") {
+      profileImage = "/male.jpg";
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        role,
+        gender, 
+        profileImage, 
+        college,
+        skills,
+        hasCompletedOnboarding: true,
+      },
+      { new: true }
+    ).select("-password");
+
+    console.log("UPDATED USER IN DB:", updatedUser);
 
     res.json({
       message: "Protocol Secured. Welcome to the Network.",
-      user: updatedUser
+      user: updatedUser,
     });
+
   } catch (error) {
+    console.error("Onboarding Error:", error);
     next(error);
   }
 };

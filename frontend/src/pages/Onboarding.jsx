@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+
+// --- GENDER IMAGES (Updated to local public folder paths) ---
+const GENDER_IMAGES = {
+  male: '/male.jpg',
+  female: '/female.jpg',
+};
 
 // --- INVESTOR LOCKED CARD ---
 const InvestorLockedCard = ({ onBack }) => (
@@ -35,7 +42,7 @@ const InvestorLockedCard = ({ onBack }) => (
         onClick={onBack}
         className="flex items-center gap-2 mx-auto text-xs font-black tracking-[0.3em] text-white/40 hover:text-orange-500 transition-colors uppercase border-b border-transparent hover:border-orange-500 pb-1"
       >
-        ← Choose Another Role
+        - Choose Another Role
       </button>
       <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent" />
     </div>
@@ -102,6 +109,61 @@ const IdentityCard = ({ id, title, sub, num, onClick, isHovered, onHover, locked
   );
 };
 
+// --- GENDER CARD ---
+const GenderCard = ({ id, title, sub, image, onClick, isHovered, onHover, selected }) => {
+  return (
+    <motion.button
+      onMouseEnter={() => onHover(id)}
+      onMouseLeave={() => onHover(null)}
+      onClick={onClick}
+      whileTap={{ scale: 0.97 }}
+      className={`relative h-[280px] sm:h-[340px] md:h-[400px] w-full group overflow-hidden bg-[#0A0A0A] border transition-all duration-500 ${selected ? 'border-orange-500' : 'border-white/5'}`}
+    >
+      <div className={`absolute inset-0 z-10 transition-all duration-700 ${isHovered || selected ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-orange-500 to-transparent" />
+      </div>
+
+      <div className={`absolute inset-0 transition-all duration-700 ${isHovered || selected ? 'opacity-30' : 'opacity-10'}`}>
+        <img src={image} alt={title} className="w-full h-full object-cover object-top" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent" />
+      </div>
+
+      {selected && (
+        <div className="absolute top-4 right-4 z-30 w-6 h-6 bg-orange-500 flex items-center justify-center">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5">
+            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      )}
+
+      <div className="relative z-20 h-full p-5 sm:p-7 lg:p-10 flex flex-col justify-between items-start text-left">
+        <div className="space-y-1 sm:space-y-2">
+          <motion.div animate={{ x: isHovered || selected ? 10 : 0 }} className="flex items-center gap-2">
+            <div className={`h-1 transition-all duration-500 ${isHovered || selected ? 'bg-orange-500 w-10' : 'bg-white/20 w-5'}`} />
+            <span className="text-[9px] sm:text-[10px] font-black tracking-[0.4em] sm:tracking-[0.5em] text-orange-500 uppercase">{sub}</span>
+          </motion.div>
+          <h3 className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black italic transition-all duration-500 ${isHovered || selected ? 'text-white translate-x-2' : 'text-white/40'}`}>
+            {title}
+          </h3>
+        </div>
+        <div className="w-full">
+          <div className={`flex items-center justify-between w-full border-t pt-3 sm:pt-4 transition-colors duration-500 ${isHovered || selected ? 'border-orange-500/50' : 'border-white/10'}`}>
+            <span className={`text-[9px] sm:text-[10px] font-bold tracking-widest ${isHovered || selected ? 'text-orange-500' : 'text-white/20'}`}>
+              {selected ? 'SELECTED' : isHovered ? 'SELECT_THIS' : 'AWAITING_SELECTION'}
+            </span>
+            <div className={`transition-all duration-500 ${isHovered || selected ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="3">
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.button>
+  );
+};
+
 // --- INTERESTS VIEW ---
 const InterestsView = ({ options, selected, toggle, onFinish, onSkip, loading }) => (
   <div className="w-full max-w-3xl px-2 sm:px-0">
@@ -130,7 +192,7 @@ const InterestsView = ({ options, selected, toggle, onFinish, onSkip, loading })
         disabled={loading}
         className="bg-white text-black px-8 sm:px-12 py-4 sm:py-5 font-black uppercase italic text-base sm:text-lg hover:bg-orange-500 hover:text-white transition-all shadow-[6px_6px_0px_#ea580c] disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? 'INITIALIZING...' : 'Initialize Dashboard →'}
+        {loading ? 'INITIALIZING...' : 'Initialize Dashboard ->'}
       </button>
       <button
         onClick={onSkip}
@@ -150,37 +212,50 @@ const Onboarding = () => {
 
   const [step, setStep] = useState(0);
   const [hoveredRole, setHoveredRole] = useState(null);
+  const [hoveredGender, setHoveredGender] = useState(null);
   const [role, setRole] = useState(null);
+  const [gender, setGender] = useState(null);
   const [college, setCollege] = useState('');
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [showInvestorCard, setShowInvestorCard] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // THE REAL FIX — calls backend, sets user properly
   const handleFinalize = async (skipInterests = false) => {
     setLoading(true);
     setError('');
+
+    if (!gender) {
+      setError('Please select gender');
+      setLoading(false);
+      return;
+    }
+
     try {
       const payload = {
         role,
+        gender: gender.toLowerCase(),
         college: college || 'Not specified',
-        skills: skipInterests ? [] : selectedInterests,
-        onboardingData: {}
+        skills: skipInterests ? [] : selectedInterests
       };
 
-      const response = await axios.patch(
-        'https://evolve-website.onrender.com/api/auth/onboarding',
-        payload
-      );
+      console.log("FINAL PAYLOAD:", payload);
 
-      // Update AuthContext — this gives user hasCompletedOnboarding: true + role
-      // so ProtectedRoute and Dashboard both work immediately
-      setUser(response.data.user);
+      const response = await api.patch('/auth/onboarding', payload);
 
-      // Navigate — ProtectedRoute will now let this through because
-      // user.hasCompletedOnboarding is true and user.role is set
-      navigate('/dashboard');
+      const updatedUser = response.data.user;
+
+      console.log("UPDATED USER FROM API:", updatedUser); 
+
+      //  FORCE UPDATE (IMPORTANT)
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      setUser(updatedUser);
+
+      //  DELAY NAVIGATION (CRITICAL FIX)
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 100);
 
     } catch (err) {
       console.error('Onboarding failed:', err);
@@ -241,7 +316,7 @@ const Onboarding = () => {
             onClick={prevStep}
             className="absolute top-5 left-4 sm:top-10 sm:left-10 z-[100] flex items-center gap-2 text-[10px] font-black tracking-[0.3em] text-white/30 hover:text-orange-500 transition-colors uppercase border-b border-transparent hover:border-orange-500 pb-1"
           >
-            ← [ Go Back ]
+            - [ Go Back ]
           </motion.button>
         )}
       </AnimatePresence>
@@ -310,10 +385,69 @@ const Onboarding = () => {
           </motion.div>
         )}
 
-        {/* STEP 1 */}
+        {/* STEP 1: GENDER SELECTION — required, no skip */}
         {step === 1 && !showInvestorCard && (
           <motion.div
-            key="step1"
+            key="gender"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="w-full max-w-4xl"
+          >
+            <div className="flex items-end justify-between mb-6 sm:mb-10 lg:mb-12 border-b border-white/5 pb-5 sm:pb-8">
+              <div>
+                <span className="text-orange-500 font-black tracking-widest text-xs uppercase mb-2 block">Identity Protocol</span>
+                <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black italic tracking-tighter uppercase leading-[0.85]">
+                  I am a<br /> <span className="text-orange-500">...</span>
+                </h1>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
+              <GenderCard
+                id="male"
+                title="MALE"
+                sub="IDENTITY"
+                image={GENDER_IMAGES.male}
+                isHovered={hoveredGender === 'male'}
+                onHover={setHoveredGender}
+                selected={gender === 'male'}
+                onClick={() => setGender('male')}
+              />
+              <GenderCard
+                id="female"
+                title="FEMALE"
+                sub="IDENTITY"
+                image={GENDER_IMAGES.female}
+                isHovered={hoveredGender === 'female'}
+                onHover={setHoveredGender}
+                selected={gender === 'female'}
+                onClick={() => setGender('female')}
+              />
+            </div>
+
+            <div className="flex items-center gap-6">
+              <button
+                onClick={nextStep}
+                disabled={!gender}
+                className="bg-white text-black px-8 sm:px-12 py-4 sm:py-5 font-black uppercase italic text-base sm:text-xl hover:bg-orange-500 hover:text-white transition-all shadow-[6px_6px_0px_#ea580c] disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                Next Phase
+              </button>
+              {!gender && (
+                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
+                  Select to continue
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* STEP 2: COLLEGE (student) or INTERESTS (mentor) */}
+        {step === 2 && !showInvestorCard && (
+          <motion.div
+            key="step2"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -345,7 +479,7 @@ const Onboarding = () => {
                     disabled={!college.trim()}
                     className="bg-white text-black px-8 sm:px-12 py-4 sm:py-5 font-black uppercase italic text-base sm:text-xl hover:bg-orange-500 hover:text-white transition-all shadow-[6px_6px_0px_#ea580c] disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none"
                   >
-                    Next Phase →
+                    Next Phase 
                   </button>
                   <button
                     onClick={() => { setCollege('Not specified'); nextStep(); }}
@@ -371,10 +505,10 @@ const Onboarding = () => {
           </motion.div>
         )}
 
-        {/* STEP 2: INTERESTS — Student only */}
-        {step === 2 && role === 'student' && !showInvestorCard && (
+        {/* STEP 3: INTERESTS — Student only */}
+        {step === 3 && role === 'student' && !showInvestorCard && (
           <motion.div
-            key="step2"
+            key="step3"
             variants={containerVariants}
             initial="hidden"
             animate="visible"

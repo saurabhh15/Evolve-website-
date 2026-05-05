@@ -208,7 +208,7 @@ export const authAPI = {
     getMe: () => api.get('/auth/me'),
 
     // Update onboarding
-    completeOnboarding: (data) => api.put('/auth/onboarding', data),
+    completeOnboarding: (data) => api.patch('/auth/onboarding', data),
 };
 
 // Export the base api instance in case you need custom calls

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { userAPI, authAPI } from '../../services/api';
-import { MapPin, X, LogOut, Save, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { userAPI } from '../../services/api';
+import { MapPin, X, LogOut, Save, Eye, EyeOff } from 'lucide-react';
+
 
 const MyProfile = () => {
     const { user, setUser, logout } = useAuth();
+    console.log("USER DATA:", user);
     const navigate = useNavigate();
 
     const [form, setForm] = useState({
@@ -18,13 +20,13 @@ const MyProfile = () => {
         github: '',
         website: '',
         skills: [],
-        // Mentor specific
         company: '',
         expertise: [],
         mentorStatus: 'Accepting Mentees',
         isAlumni: false,
         gradYear: '',
         responseTime: '< 48 hrs',
+        coverImage: ''
     });
 
     const [skillInput, setSkillInput] = useState('');
@@ -33,7 +35,6 @@ const MyProfile = () => {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState(null);
 
-    // Password state
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -43,15 +44,17 @@ const MyProfile = () => {
     const [passwordError, setPasswordError] = useState(null);
     const [passwordSaving, setPasswordSaving] = useState(false);
 
-    // Initialize form from user
     useEffect(() => {
         if (user) {
+            const savedImage = user.profileImage || '';
+            const cleanImage = savedImage.includes('freepik.com') ? '' : savedImage;
+
             setForm({
                 name: user.name || '',
                 bio: user.bio || '',
                 location: user.location || '',
                 college: user.college || '',
-                profileImage: user.profileImage || '',
+                profileImage: cleanImage,
                 linkedIn: user.linkedIn || '',
                 github: user.github || '',
                 website: user.website || '',
@@ -107,15 +110,21 @@ const MyProfile = () => {
         }
     };
 
-    const inputClass = "w-full px-4 py-3 bg-[#161616] border border-white/[0.04] hover:border-white/[0.08] focus:border-[#e87315]/30 rounded-xl text-white text-sm focus:outline-none transition-all";
-    const labelClass = "block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2";
-    const cardClass = "bg-[#101010] border border-white/[0.04] rounded-2xl p-6 space-y-5";
+    
+
+    const getDisplayImage = () => {
+        if (!user?.profileImage) return '';
+        // if it's default image from backend
+        if (user.profileImage.startsWith('/')) {
+            return `https://evolve-website.onrender.com${user.profileImage}`;
+        }
+
+        return user.profileImage;
+    };
 
     return (
-        <div className="w-full pb-20 bg-[#050505] min-h-screen">
-
-            {/* ── Header Banner ── */}
-            <div className="relative h-48 w-full overflow-hidden rounded-b-xl">
+        <div className="w-full pb-20 bg-[#050505] min-h-screen font-sans">
+            <div className="relative h-48 sm:h-64 w-full overflow-hidden rounded-b-xl">
                 {form.coverImage ? (
                     <img
                         src={form.coverImage}
@@ -134,15 +143,12 @@ const MyProfile = () => {
                 )}
             </div>
 
-
-            {/* ── Profile Image + Name ── */}
-            <div className="max-w-4xl mx-auto px-6">
-                <div className="relative -mt-16 flex items-end gap-6 pb-8 border-b border-white/[0.04]">
-                    {/* Avatar */}
+            <div className="max-w-4xl mx-auto px-4 sm:px-6">
+                <div className="relative -mt-16 flex flex-col sm:flex-row items-center sm:items-end gap-6 pb-8 border-b border-white/[0.04]">
                     <div className="relative flex-shrink-0">
-                        <div className="w-28 h-28  overflow-hidden border-4 border-[#050505] shadow-2xl">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden border-4 border-[#050505] shadow-2xl">
                             <img
-                                src={form.profileImage || `https://ui-avatars.com/api/?background=111111&color=e87315&size=400&name=${user?.name}&bold=true`}
+                                src={getDisplayImage()}
                                 onError={(e) => {
                                     e.target.src = `https://ui-avatars.com/api/?background=111111&color=e87315&size=400&name=${user?.name}&bold=true`;
                                 }}
@@ -152,75 +158,71 @@ const MyProfile = () => {
                         </div>
                     </div>
 
-                    {/* Name + role */}
-                    <div className="flex-1 pb-2">
-                        <h1 className="text-3xl font-black tracking-tighter text-white">{user?.name}</h1>
-                        <p className="text-[#e87315] text-xs font-bold uppercase tracking-widest mt-1">{user?.role || 'Member'}</p>
-                        {user?.location && (
-                            <div className="flex items-center gap-1.5 text-white/30 mt-1.5">
-                                <MapPin size={11} />
-                                <span className="text-[10px] font-medium">{user.location}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Save Button */}
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className={`group/save relative flex items-center gap-3 px-8 py-4 overflow-hidden transition-all duration-500 border ${saveSuccess
-                            ? 'bg-green-500/5 border-green-500/30 text-green-400'
-                            : 'bg-transparent border-[#e87315] text-[#e87315]'
-                            }`}
-                    >
-                        {/* ── Background Slide Fill ── */}
-                        {!saveSuccess && (
-                            <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/save:translate-y-0 transition-transform duration-300 ease-out" />
-                        )}
-
-                        {/* ── Content ── */}
-                        <div className={`relative z-10 flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.3em] transition-colors duration-300 ${!saveSuccess && 'group-hover/save:text-black'
-                            }`}>
-                            {saving ? (
-                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : saveSuccess ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
-                                    <span>Updating..</span>
+                    <div className="flex-1 w-full flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6 pb-2 text-center sm:text-left">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{user?.name}</h1>
+                            <p className="text-[#e87315] text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-1">
+                                {(user?.role || 'member').toUpperCase()}
+                                {user?.gender ? ` / ${user.gender.toUpperCase()}` : ''}
+                            </p>
+                            {user?.location && (
+                                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-white/30 mt-1.5">
+                                    <MapPin size={11} />
+                                    <span className="text-[10px] font-medium">{user.location}</span>
                                 </div>
-                            ) : (
-                                <>
-                                    <Save size={14} className="group-hover/save:scale-110 transition-transform" />
-                                    <span>Save Changes</span>
-                                </>
                             )}
                         </div>
 
-                        {/* Architect Accent: Corner Notch */}
-                        <div className={`absolute top-0 right-0 w-1.5 h-1.5 transition-colors ${saveSuccess ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/save:bg-black'
-                            }`} />
-                    </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className={`group/save relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-3.5 sm:py-4 overflow-hidden transition-all duration-500 border ${saveSuccess
+                                ? 'bg-green-500/5 border-green-500/30 text-green-400'
+                                : 'bg-transparent border-[#e87315] text-[#e87315]'
+                                }`}
+                        >
+                            {!saveSuccess && (
+                                <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/save:translate-y-0 transition-transform duration-300 ease-out" />
+                            )}
+
+                            <div className={`relative z-10 flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.3em] transition-colors duration-300 ${!saveSuccess && 'group-hover/save:text-black'
+                                }`}>
+                                {saving ? (
+                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : saveSuccess ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
+                                        <span>Updating..</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Save size={14} className="group-hover/save:scale-110 transition-transform" />
+                                        <span>Save Changes</span>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className={`absolute top-0 right-0 w-1.5 h-1.5 transition-colors ${saveSuccess ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/save:bg-black'
+                                }`} />
+                        </button>
+                    </div>
                 </div>
 
                 {error && (
-                    <p className="text-red-400 text-sm font-semibold mt-4">{error}</p>
+                    <p className="text-red-400 text-sm font-semibold mt-4 text-center sm:text-left">{error}</p>
                 )}
 
                 <div className="space-y-6 mt-8">
-
-                    {/* ── Basic Info ── */}
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Header Segment ── */}
-                        <div className="flex items-center gap-3 mb-10 relative z-10">
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                        <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                             <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em] italic">
                                 Basic Info
                             </h2>
                         </div>
 
-                        <div className="space-y-8 relative z-10">
-                            {/* Grid: Name & Location */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6 sm:space-y-8 relative z-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                 <div className="space-y-2 group/input">
                                     <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
                                         01 Name
@@ -252,7 +254,6 @@ const MyProfile = () => {
                                 </div>
                             </div>
 
-                            {/* College Segment */}
                             <div className="space-y-2 group/input">
                                 <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
                                     03 College Name
@@ -268,7 +269,6 @@ const MyProfile = () => {
                                 </div>
                             </div>
 
-                            {/* Bio Segment */}
                             <div className="space-y-2 group/input z-20">
                                 <label className="text-[11px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
                                     04 About
@@ -285,53 +285,38 @@ const MyProfile = () => {
                             </div>
                         </div>
 
-                        {/* Architect Background Detail */}
-                        <div className="absolute -bottom-6 -right-16 -rotate-30 opacity-[0.02] select-none pointer-events-none z-10">
+                        <div className="absolute -bottom-6 -right-16 -rotate-30 opacity-[0.02] select-none pointer-events-none z-10 hidden sm:block">
                             <span className="text-[120px] font-black italic tracking-tighter uppercase">Info</span>
                         </div>
-
-                        {/* Corner Accents */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors duration-500" />
                     </div>
 
-                    {/* ── Profile Image ── */}
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Background Decal ── */}
-                        <div className="absolute top-40 -right-10 -rotate-35 p-4 opacity-[0.02] select-none pointer-events-none">
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                        <div className="absolute top-40 -right-10 -rotate-35 p-4 opacity-[0.02] select-none pointer-events-none hidden sm:block">
                             <span className="text-[60px] font-black text-white italic leading-none tracking-tighter">Image</span>
                         </div>
 
-                        {/* ── Header Segment ── */}
-                        <div className="flex items-center gap-3 mb-10 relative z-10">
+                        <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                             <h2 className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em] italic">
                                 Profile Image
                             </h2>
                         </div>
 
-                        <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
-                            {/* Preview Hex/Box */}
-                            <div className="relative group/preview">
+                        <div className="relative z-10 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+                            <div className="relative group/preview w-full sm:w-auto flex justify-center sm:justify-start">
                                 <div className="w-24 h-24 bg-white/[0.02] border border-white/5 overflow-hidden transition-all duration-500 group-hover/preview:border-[#e87315]/40">
-                                    {form.profileImage ? (
-                                        <img
-                                            src={form.profileImage}
-                                            alt="Preview"
-                                            className="w-full h-full object-cover grayscale group-hover/preview:grayscale-0 transition-all duration-700"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <div className="w-4 h-4 border border-white/10 rotate-45" />
-                                        </div>
-                                    )}
+                                    <img
+                                        src={getDisplayImage()}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover grayscale group-hover/preview:grayscale-0 transition-all duration-700"
+                                    />
                                 </div>
-                                {/* Architect Corner Ticks */}
-                                <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-[#e87315]" />
-                                <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-white/20 group-hover/preview:border-[#e87315] transition-colors" />
+                                <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-[#e87315] hidden sm:block" />
+                                <div className="absolute -bottom-1 -right-1 w-2 h-2 border-b border-r border-white/20 group-hover/preview:border-[#e87315] transition-colors hidden sm:block" />
                             </div>
 
-                            {/* Input Logic */}
                             <div className="flex-1 w-full space-y-3 group/input">
                                 <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
                                     <span className="text-[#e87315]"></span> Source_Path
@@ -345,42 +330,38 @@ const MyProfile = () => {
                                         placeholder="EXTERNAL_LINK_REQUIRED..."
                                         className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono tracking-tight"
                                     />
-                                    {/* Scanning line animation on focus */}
                                     <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
                                 </div>
 
                                 <div className="flex items-start gap-2 pt-1">
                                     <div className="mt-1 w-1 h-1 bg-white/20" />
                                     <p className="text-[9px] font-medium text-white/20 uppercase tracking-widest leading-relaxed">
-                                        Supported: Unsplash, Imgur, Cloudinary. <br />
+                                        Supported: Unsplash, Imgur, Cloudinary. <br className="hidden sm:block" />
                                         Ensure the URL terminates in a valid image extension.
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Corner Signatures */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Background Decal ── */}
-                        <div className="absolute top-60 right-160 rotate-20 p-4 opacity-[0.02] select-none pointer-events-none">
+
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                        <div className="absolute top-60 right-160 rotate-20 p-4 opacity-[0.02] select-none pointer-events-none hidden lg:block">
                             <span className="text-[60px] font-black text-white italic leading-none tracking-tighter uppercase">Header</span>
                         </div>
 
-                        {/* ── Input Segment ── */}
                         <div className="relative z-10 space-y-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                 <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em] italic">
-                                    05  Cover Image
+                                    05 Cover Image
                                 </label>
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                {/* Aspect-Ratio Preview Frame */}
-                                <div className="relative w-full h-32 bg-white/[0.02] border border-white/5 overflow-hidden transition-all duration-500 group-hover:border-[#e87315]/20">
+                                <div className="relative w-full h-24 sm:h-32 bg-white/[0.02] border border-white/5 overflow-hidden transition-all duration-500 group-hover:border-[#e87315]/20">
                                     {form.coverImage ? (
                                         <img
                                             src={form.coverImage}
@@ -389,10 +370,9 @@ const MyProfile = () => {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-white/5">
-                                            <span className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em]">Add an profile header...</span>
+                                            <span className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] text-center px-4">Add a profile header...</span>
                                         </div>
                                     )}
-                                    {/* Scanning HUD Overlay */}
                                     <div className="absolute top-2 left-2 flex gap-1">
                                         <div className="w-1 h-1 bg-[#e87315]/40" />
                                         <div className="w-4 h-[1px] bg-[#e87315]/20 mt-[2px]" />
@@ -413,20 +393,17 @@ const MyProfile = () => {
 
                             <div className="flex items-center gap-3">
                                 <div className="h-[1px] w-8 bg-[#e87315]/30" />
-                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em]">
+                                <p className="text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] leading-relaxed">
                                     This deployment serves as your profile header background.
                                 </p>
                             </div>
                         </div>
 
-                        {/* Architect Signatures */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
-                    {/* ── Social Links ── */}
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Section Header ── */}
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
@@ -434,9 +411,7 @@ const MyProfile = () => {
                             </h2>
                         </div>
 
-                        {/* ── Input Grid ── */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                            {/* LinkedIn Input */}
                             <div className="space-y-2 group/input">
                                 <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
                                     LinkedIn
@@ -453,7 +428,6 @@ const MyProfile = () => {
                                 </div>
                             </div>
 
-                            {/* GitHub Input */}
                             <div className="space-y-2 group/input">
                                 <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
                                     GitHub
@@ -470,7 +444,6 @@ const MyProfile = () => {
                                 </div>
                             </div>
 
-                            {/* Website Input */}
                             <div className="space-y-2 group/input">
                                 <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
                                     Website
@@ -488,17 +461,12 @@ const MyProfile = () => {
                             </div>
                         </div>
 
-                        {/* ── Background Accents ── */}
                         <div className="absolute -bottom-2 -right-2 w-24 h-24 bg-[#e87315]/[0.02] rounded-full blur-2xl pointer-events-none" />
-
-                        {/* Architect Signatures */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
-                    {/* ── Skills ── */}
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Section Header ── */}
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                             <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
@@ -507,7 +475,6 @@ const MyProfile = () => {
                         </div>
 
                         <div className="relative z-10 space-y-6">
-                            {/* ── Tags Container ── */}
                             <div className="flex flex-wrap gap-3">
                                 {form.skills.map((skill, i) => (
                                     <div
@@ -533,7 +500,6 @@ const MyProfile = () => {
                                 )}
                             </div>
 
-                            {/* ── Input Field ── */}
                             <div className="relative group/input">
                                 <input
                                     type="text"
@@ -543,38 +509,29 @@ const MyProfile = () => {
                                     onKeyDown={handleAddSkill}
                                     className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono italic"
                                 />
-                                {/* Animated focus underline */}
                                 <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
-
-                                {/* Corner Accent for Input */}
                                 <div className="absolute top-0 right-0 w-1 h-1 bg-white/5 group-focus-within/input:bg-[#e87315] transition-colors" />
                             </div>
                         </div>
 
-                        {/* ── Background Decal ── */}
-                        <div className="absolute -bottom-10 -left-2 opacity-[0.02] select-none pointer-events-none">
+                        <div className="absolute -bottom-10 -left-2 opacity-[0.02] select-none pointer-events-none hidden sm:block">
                             <span className="text-[80px] font-black text-white italic leading-none tracking-tighter uppercase">Ability</span>
                         </div>
-
-                        {/* Architect Signatures */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
-                    {/* ── Mentor Specific ── */}
                     {user?.role === 'mentor' && (
-                        <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                            {/* ── Section Header ── */}
-                            <div className="flex items-center gap-3 mb-10 relative z-10">
+                        <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                            <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
                                 <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
                                     Mentor Settings
                                 </h2>
                             </div>
 
-                            <div className="space-y-8 relative z-10">
-                                {/* Grid: Company & Response Time */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6 sm:space-y-8 relative z-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                                     <div className="space-y-2 group/input">
                                         <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
                                             Current Company
@@ -604,12 +561,11 @@ const MyProfile = () => {
                                                     <option key={t} value={t} className="bg-[#0f0f0f] text-white">{t}</option>
                                                 ))}
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20">▼</div>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20">V</div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Status Selector */}
                                 <div className="space-y-2 group/input">
                                     <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
                                         Availability Status
@@ -624,14 +580,13 @@ const MyProfile = () => {
                                                 <option key={s} value={s} className="bg-[#0f0f0f] text-white">{s}</option>
                                             ))}
                                         </select>
-                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20">▼</div>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20">V</div>
                                     </div>
                                 </div>
 
-                                {/* Alumni Toggle & Year */}
-                                <div className="flex flex-col md:flex-row items-end gap-8 pt-2">
-                                    <div className="w-full md:w-auto space-y-3">
-                                        <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mr-2"> Alumni</label>
+                                <div className="flex flex-col md:flex-row md:items-end gap-6 sm:gap-8 pt-2">
+                                    <div className="w-full md:w-auto space-y-3 flex flex-col">
+                                        <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]"> Alumni</label>
                                         <button
                                             onClick={() => setForm(prev => ({ ...prev, isAlumni: !prev.isAlumni }))}
                                             className={`w-full md:w-32 py-3 text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-300 ${form.isAlumni
@@ -657,7 +612,6 @@ const MyProfile = () => {
                                     )}
                                 </div>
 
-                                {/* Expertise Tags */}
                                 <div className="space-y-4 pt-4">
                                     <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Core Expertise</label>
                                     <div className="flex flex-wrap gap-2">
@@ -686,16 +640,13 @@ const MyProfile = () => {
                                 </div>
                             </div>
 
-                            {/* Architect Details */}
                             <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                             <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                         </div>
                     )}
 
-                    {/* ── Change Password ── */}
-                    <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                        {/* ── Section Header ── */}
-                        <div className="flex items-center justify-between mb-10 relative z-10">
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                        <div className="flex items-center justify-between mb-8 sm:mb-10 relative z-10">
                             <div className="flex items-center gap-3">
                                 <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                 <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
@@ -711,8 +662,7 @@ const MyProfile = () => {
                             </button>
                         </div>
 
-                        {/* ── Input Fields ── */}
-                        <div className="space-y-8 relative z-10">
+                        <div className="space-y-6 sm:space-y-8 relative z-10">
                             {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
                                 <div key={field} className="space-y-2 group/input">
                                     <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
@@ -731,11 +681,10 @@ const MyProfile = () => {
                             ))}
                         </div>
 
-                        {/* ── Error & Action ── */}
-                        <div className="mt-10 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10 border-t border-white/5 pt-8">
-                            <div className="min-h-[20px]">
+                        <div className="mt-8 sm:mt-10 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10 border-t border-white/5 pt-8">
+                            <div className="min-h-[20px] w-full text-center md:text-left">
                                 {passwordError && (
-                                    <div className="flex items-center gap-2 text-red-500 animate-in fade-in slide-in-from-left-2">
+                                    <div className="flex items-center justify-center md:justify-start gap-2 text-red-500 animate-in fade-in slide-in-from-left-2">
                                         <div className="w-1 h-1 bg-red-500 animate-pulse" />
                                         <p className="text-[10px] font-black uppercase tracking-widest">{passwordError}</p>
                                     </div>
@@ -764,7 +713,7 @@ const MyProfile = () => {
                                         setPasswordSaving(false);
                                     }
                                 }}
-                                className="group/btn relative px-8 py-3 overflow-hidden bg-transparent border border-[#e87315] transition-all duration-300 disabled:opacity-50"
+                                className="group/btn relative w-full sm:w-auto px-8 py-3.5 sm:py-3 overflow-hidden bg-transparent border border-[#e87315] transition-all duration-300 disabled:opacity-50 text-center flex justify-center"
                             >
                                 <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
                                 <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em] text-[#e87315] group-hover/btn:text-black transition-colors">
@@ -773,25 +722,20 @@ const MyProfile = () => {
                             </button>
                         </div>
 
-                        {/* Architect Signatures */}
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
-
-                        {/* Decorative background number */}
-
                     </div>
 
-                    {/* ── Danger Zone ── */}
                     <div className="bg-red-500/[0.04] border border-red-500/20 rounded-2xl p-6">
                         <h2 className="text-[10px] font-black text-red-500/70 uppercase tracking-widest mb-4">Danger Zone</h2>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <p className="text-sm font-bold text-white">Log Out</p>
                                 <p className="text-xs text-gray-600 mt-0.5">Sign out of your account on this device.</p>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                                className="flex justify-center items-center gap-2 w-full sm:w-auto px-5 py-3 sm:py-2.5 bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 text-red-400 hover:text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all"
                             >
                                 <LogOut size={14} />
                                 Logout

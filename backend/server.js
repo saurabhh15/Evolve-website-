@@ -81,8 +81,16 @@ const sanitizeObject = (obj) => {
 };
 
 app.use((req, res, next) => {
-  sanitizeObject(req.body);
-  sanitizeObject(req.params);
+  try {
+    if (req.body && typeof req.body === 'object') {
+      sanitizeObject(req.body);
+    }
+    if (req.params && typeof req.params === 'object') {
+      sanitizeObject(req.params);
+    }
+  } catch (err) {
+    console.error("Sanitize Error:", err);
+  }
   next();
 });
 

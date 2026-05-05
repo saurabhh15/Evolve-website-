@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import axios from "axios";
 
 const AuthContext = createContext();
 
@@ -10,36 +10,60 @@ export const AuthProvider = ({ children }) => {
   // 1. Check if user is logged in on refresh
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+
       if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+        //  FIRST: use localStorage (latest user)
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+
         try {
-          // Set default header for all future requests
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const res = await axios.get('https://evolve-website.onrender.com/api/auth/me');
+          const res = await axios.get(
+            "https://evolve-website.onrender.com/api/auth/me",
+          );
+
+          //  UPDATE BOTH STATE + LOCALSTORAGE
           setUser(res.data);
+          localStorage.setItem("user", JSON.stringify(res.data));
         } catch (err) {
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          delete axios.defaults.headers.common["Authorization"];
         }
       }
+
       setLoading(false);
     };
+
     initAuth();
   }, []);
 
   // 2. Login Function
   const login = async (email, password) => {
-    const res = await axios.post('https://evolve-website.onrender.com/api/auth/login', { email, password });
-    localStorage.setItem('token', res.data.token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+    const res = await axios.post(
+      "https://evolve-website.onrender.com/api/auth/login",
+      { email, password },
+    );
+
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data.user));
+
+    axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+
     setUser(res.data.user);
+
     return res.data.user;
   };
 
   // 3. Logout Function
   const logout = () => {
-    localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem("token");
+    localStorage.removeItem("user"); 
+    delete axios.defaults.headers.common["Authorization"];
     setUser(null);
   };
 

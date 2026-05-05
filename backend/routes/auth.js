@@ -16,7 +16,10 @@ router.post('/login', login);
 // Get Current User (Session check)
 router.get('/me', auth, getMe);
 
-router.patch('/onboarding', auth, completeOnboarding);
+router.patch('/onboarding', auth, (req, res, next) => {
+  console.log(" ROUTE HIT");
+  next();
+}, completeOnboarding);
 
 
 //  GOOGLE OAuth ROUTES 

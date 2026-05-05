@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userAPI, connectionAPI, projectAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, ArrowLeft, ExternalLink, Heart, Eye, UserPlus, Settings , MessageSquare  } from 'lucide-react';
+import { MapPin, ArrowLeft, ExternalLink, Heart, Eye, UserPlus, Settings, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const StudentProfile = () => {
@@ -31,8 +31,7 @@ const StudentProfile = () => {
                 setProfile(profileRes.data);
                 setProjects(projectsRes.data);
 
-
-                const isAccepted = networkRes.data.some(
+                const accepted = networkRes.data.some(
                     u => u._id.toString() === id
                 );
                 const isPending = sentRes.data.some(
@@ -41,8 +40,8 @@ const StudentProfile = () => {
                         c.status === 'pending'
                 );
 
-                setConnected(isPending && !isAccepted);
-                setIsAccepted(isAccepted);
+                setConnected(isPending && !accepted);
+                setIsAccepted(accepted);
 
             } catch (err) {
                 setError('Failed to load profile.');
@@ -80,6 +79,20 @@ const StudentProfile = () => {
         }
     };
 
+    const getDisplayImage = () => {
+        // if custom uploaded image exists
+        if (profile?.profileImage && !profile.profileImage.includes('freepik.com')) {
+            return profile.profileImage;
+        }
+
+        // fallback to gender image
+        if (profile?.gender === 'female') return '/female.jpg';
+        if (profile?.gender === 'male') return '/male.jpg';
+
+        // fallback avatar
+        return `https://ui-avatars.com/api/?background=111111&color=e87315&size=400&name=${profile?.name || 'User'}&bold=true`;
+    };
+
     if (loading) return (
         <div className="min-h-screen bg-[#050505] flex items-center justify-center">
             <div className="w-16 h-16 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
@@ -95,20 +108,18 @@ const StudentProfile = () => {
     const isOwnProfile = profile._id === user?._id;
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white pb-20">
-
-            {/* Back button */}
-            <div className="sticky top-4 z-50 px-6 pointer-events-none" style={{ marginBottom: '-48px' }}>
+        <div className="min-h-screen bg-[#050505] text-white pb-20 overflow-x-hidden">
+            <div className="sticky top-4 z-50 px-4 sm:px-6 pointer-events-none" style={{ marginBottom: '-48px' }}>
                 <button
                     onClick={() => navigate(-1)}
-                    className="pointer-events-auto flex items-center gap-2 text-[17px] font-bold tracking-widest uppercase text-white/50 hover:text-[#e87315] transition-colors bg-black/40 backdrop-blur-md border border-white/[0.06] px-4 py-2.5 rounded-xs p-2.5"
+                    className="pointer-events-auto flex items-center gap-2 text-[14px] sm:text-[17px] font-bold tracking-widest uppercase text-white/50 hover:text-[#e87315] transition-colors bg-black/40 backdrop-blur-md border border-white/[0.06] px-4 py-2 sm:py-2.5 rounded-xs"
                 >
                     <ArrowLeft size={16} />
                     Back
                 </button>
             </div>
-            {/* ── Cover Banner ── */}
-            <div className="relative h-52 w-full overflow-hidden">
+
+            <div className="relative h-48 sm:h-52 w-full overflow-hidden">
                 {profile.coverImage ? (
                     <img
                         src={profile.coverImage}
@@ -125,18 +136,14 @@ const StudentProfile = () => {
                     </>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent" />
-
             </div>
 
-            {/* ── Profile Header ── */}
-            <div className="max-w-5xl mx-auto px-6">
-                <div className="relative -mt-16 flex items-end gap-6 pb-8 border-b border-white/[0.04]">
-
-                    {/* Avatar */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6">
+                <div className="relative -mt-16 flex flex-col md:flex-row items-center md:items-end gap-6 pb-8 border-b border-white/[0.04]">
                     <div className="relative flex-shrink-0">
-                        <div className="w-28 h-28 rounded-xl overflow-hidden border-4 border-[#050505] shadow-2xl">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden border-4 border-[#050505] shadow-2xl">
                             <img
-                                src={profile.profileImage}
+                                src={getDisplayImage()}
                                 onError={(e) => {
                                     e.target.src = `https://ui-avatars.com/api/?background=111111&color=e87315&size=400&name=${profile.name}&bold=true`;
                                 }}
@@ -154,224 +161,181 @@ const StudentProfile = () => {
                         </div>
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1 pb-2">
-                        <div className="flex items-start justify-between gap-4 flex-wrap">
-                            <div>
-                                <h1 className="text-3xl font-black tracking-tighter text-white">{profile.name}</h1>
-                                {profile.college && (
-                                    <p className="text-xs font-bold text-[#e87315] uppercase tracking-widest mt-0.5">{profile.college}</p>
-                                )}
-                                {profile.location && (
-                                    <div className="flex items-center gap-1.5 text-white/30 mt-1.5">
-                                        <MapPin size={11} />
-                                        <span className="text-[10px] font-medium">{profile.location}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Actions */}
-                            {!isOwnProfile && (
-                                <div className="relative group/action flex items-center top-7.5">
-                                    {isAccepted ? (
-                                        /* ── Send Message Action ── */
-                                        <button
-                                            onClick={() => navigate('/dashboard/messages')}
-                                            className="relative flex items-center gap-3 px-8 py-4 bg-[#e87315] overflow-hidden transition-all duration-300 group/msg"
-                                        >
-                                            <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover/msg:translate-x-0 transition-transform duration-500" />
-
-                                            <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-black flex items-center gap-2">
-                                                <MessageSquare size={14} strokeWidth={3} />
-                                                Send Message
-                                            </span>
-
-                                            {/* Architect Accent */}
-                                            <div className="absolute top-0 right-0 w-2 h-2 bg-black/20" />
-                                        </button>
-                                    ) : (
-                                        /* ── Connection Logic ── */
-                                        <button
-                                            onClick={handleConnect}
-                                            disabled={connected || connecting}
-                                            className={`relative flex items-center gap-3 px-8 py-4 border overflow-hidden transition-all duration-500 ${connected
-                                                ? 'bg-green-500/5 border-green-500/30 text-green-400'
-                                                : 'bg-transparent border-[#e87315] text-[#e87315]'
-                                                }`}
-                                        >
-                                            {/* Background Hover Slide */}
-                                            {!connected && !connecting && (
-                                                <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/action:translate-y-0 transition-transform duration-300 ease-out" />
-                                            )}
-
-                                            <div className={`relative z-10 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-300 ${!connected && !connecting && 'group-hover/action:text-black'
-                                                }`}>
-                                                {connecting ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                                        <span>Linking...</span>
-                                                    </div>
-                                                ) : connected ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                                                        <span>Request_Sent</span>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <UserPlus size={14} strokeWidth={3} />
-                                                        <span>Connect</span>
-                                                    </>
-                                                )}
-                                            </div>
-
-                                            {/* Decorative Tech-Corner */}
-                                            <div className={`absolute top-0 right-0 w-1.5 h-1.5 transition-colors ${connected ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/action:bg-black'
-                                                }`} />
-                                        </button>
-                                    )}
+                    <div className="flex-1 w-full flex flex-col md:flex-row items-center md:items-end justify-between gap-6 pb-2 text-center md:text-left">
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-white">{profile.name}</h1>
+                            <p className="text-xs font-bold text-[#e87315] uppercase tracking-widest mt-0.5">
+                                {(profile.role || 'member').toUpperCase()} 
+                                {profile.gender ? ` / ${profile.gender.toUpperCase()}` : ''}
+                            </p>
+                            {profile.college && (
+                                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-1">{profile.college}</p>
+                            )}
+                            {profile.location && (
+                                <div className="flex items-center justify-center md:justify-start gap-1.5 text-white/30 mt-1.5">
+                                    <MapPin size={11} />
+                                    <span className="text-[10px] font-medium">{profile.location}</span>
                                 </div>
                             )}
-
-                            {isOwnProfile && (
-                                <button
-                                    onClick={() => navigate('/dashboard/myprofile')}
-                                    className="relative group/edit top-7 overflow-hidden px-8 py-4 bg-white/[0.02] border border-white/10 hover:border-[#e87315]/40 transition-all duration-300"
-                                >
-                                    {/* ── Hover Background Fill ── */}
-                                    <div className="absolute inset-0 bg-[#e87315]/[0.03] translate-y-full group-hover/edit:translate-y-0 transition-transform duration-500 ease-out" />
-
-                                    <div className="relative z-10 flex items-center gap-3">
-                                        {/* Animated Icon */}
-                                        <Settings
-                                            size={14}
-                                            className="text-[#e87315] group-hover/edit:rotate-90 transition-transform duration-500"
-                                        />
-
-                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70 group-hover/edit:text-white transition-colors">
-                                            Edit Profile
-                                        </span>
-                                    </div>
-
-                                    {/* ── Corner Accents ── */}
-                                    <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315] opacity-0 group-hover/edit:opacity-100 transition-opacity" />
-                                    <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/20" />
-
-                                    {/* Side Scanning Line */}
-                                    <div className="absolute top-0 right-0 w-[1px] h-0 bg-[#e87315] group-hover/edit:h-full transition-all duration-500" />
-                                </button>
-                            )}
                         </div>
 
-                        {/* Social links */}
-                        <div className="flex flex-wrap gap-3 mt-6">
-                            {profile.linkedIn && (
-                                <a
-                                    href={profile.linkedIn}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
-                                >
-                                    {/* Hover Background Slide */}
-                                    <div className="absolute inset-0 bg-[#e87315] -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
-
-                                    <div className="relative z-10 flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-[#e87315] group-hover/link:bg-black transition-colors" />
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
-                                            LinkedIn
+                        {!isOwnProfile && (
+                            <div className="relative group/action flex items-center w-full md:w-auto justify-center md:justify-end mt-4 md:mt-0">
+                                {isAccepted ? (
+                                    <button
+                                        onClick={() => navigate('/dashboard/messages')}
+                                        className="relative flex justify-center items-center gap-3 w-full md:w-auto px-8 py-3.5 sm:py-4 bg-[#e87315] overflow-hidden transition-all duration-300 group/msg"
+                                    >
+                                        <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover/msg:translate-x-0 transition-transform duration-500" />
+                                        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-black flex items-center gap-2">
+                                            <MessageSquare size={14} strokeWidth={3} />
+                                            Send Message
                                         </span>
-                                    </div>
+                                        <div className="absolute top-0 right-0 w-2 h-2 bg-black/20" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleConnect}
+                                        disabled={connected || connecting}
+                                        className={`relative flex justify-center items-center gap-3 w-full md:w-auto px-8 py-3.5 sm:py-4 border overflow-hidden transition-all duration-500 ${connected
+                                            ? 'bg-green-500/5 border-green-500/30 text-green-400'
+                                            : 'bg-transparent border-[#e87315] text-[#e87315]'
+                                            }`}
+                                    >
+                                        {!connected && !connecting && (
+                                            <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/action:translate-y-0 transition-transform duration-300 ease-out" />
+                                        )}
+                                        <div className={`relative z-10 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.3em] transition-colors duration-300 ${!connected && !connecting && 'group-hover/action:text-black'
+                                            }`}>
+                                            {connecting ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                    <span>Linking...</span>
+                                                </div>
+                                            ) : connected ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                                    <span>Request_Sent</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <UserPlus size={14} strokeWidth={3} />
+                                                    <span>Connect</span>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className={`absolute top-0 right-0 w-1.5 h-1.5 transition-colors ${connected ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/action:bg-black'
+                                            }`} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
 
-                                    {/* Micro-corner accent */}
-                                    <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
-                                </a>
-                            )}
-
-                            {profile.github && (
-                                <a
-                                    href={profile.github}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
-                                >
-                                    <div className="absolute inset-0 bg-white -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
-
-                                    <div className="relative z-10 flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-white group-hover/link:bg-black transition-colors" />
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
-                                            GitHub
-                                        </span>
-                                    </div>
-
-                                    <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
-                                </a>
-                            )}
-
-                            {profile.website && (
-                                <a
-                                    href={profile.website}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
-                                >
-                                    <div className="absolute inset-0 bg-[#e87315] -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
-
-                                    <div className="relative z-10 flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-[#e87315] group-hover/link:bg-black transition-colors" />
-                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
-                                            Website
-                                        </span>
-                                    </div>
-
-                                    <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
-                                </a>
-                            )}
-                        </div>
+                        {isOwnProfile && (
+                            <button
+                                onClick={() => navigate('/dashboard/myprofile')}
+                                className="relative group/edit flex items-center justify-center w-full md:w-auto overflow-hidden px-8 py-3.5 sm:py-4 mt-4 md:mt-0 bg-white/[0.02] border border-white/10 hover:border-[#e87315]/40 transition-all duration-300"
+                            >
+                                <div className="absolute inset-0 bg-[#e87315]/[0.03] translate-y-full group-hover/edit:translate-y-0 transition-transform duration-500 ease-out" />
+                                <div className="relative z-10 flex items-center gap-3">
+                                    <Settings size={14} className="text-[#e87315] group-hover/edit:rotate-90 transition-transform duration-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70 group-hover/edit:text-white transition-colors">
+                                        Edit Profile
+                                    </span>
+                                </div>
+                                <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315] opacity-0 group-hover/edit:opacity-100 transition-opacity" />
+                                <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/20" />
+                                <div className="absolute top-0 right-0 w-[1px] h-0 bg-[#e87315] group-hover/edit:h-full transition-all duration-500" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* ── Main Content ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-10">
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-6">
+                    {profile.linkedIn && (
+                        <a
+                            href={profile.linkedIn}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
+                        >
+                            <div className="absolute inset-0 bg-[#e87315] -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
+                            <div className="relative z-10 flex items-center gap-2">
+                                <div className="w-1 h-1 bg-[#e87315] group-hover/link:bg-black transition-colors" />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
+                                    LinkedIn
+                                </span>
+                            </div>
+                            <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
+                        </a>
+                    )}
 
-                    {/* LEFT: Bio + Skills */}
+                    {profile.github && (
+                        <a
+                            href={profile.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
+                        >
+                            <div className="absolute inset-0 bg-white -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
+                            <div className="relative z-10 flex items-center gap-2">
+                                <div className="w-1 h-1 bg-white group-hover/link:bg-black transition-colors" />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
+                                    GitHub
+                                </span>
+                            </div>
+                            <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
+                        </a>
+                    )}
+
+                    {profile.website && (
+                        <a
+                            href={profile.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group/link relative px-4 py-2 overflow-hidden border border-white/5 transition-all duration-300"
+                        >
+                            <div className="absolute inset-0 bg-[#e87315] -translate-x-full group-hover/link:translate-x-0 transition-transform duration-300 ease-out" />
+                            <div className="relative z-10 flex items-center gap-2">
+                                <div className="w-1 h-1 bg-[#e87315] group-hover/link:bg-black transition-colors" />
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50 group-hover/link:text-black transition-colors">
+                                    Website
+                                </span>
+                            </div>
+                            <div className="absolute top-0 right-0 w-1 h-1 bg-white/10" />
+                        </a>
+                    )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-10">
                     <aside className="lg:col-span-4 space-y-6">
-
-                        {/* Bio */}
                         <div className="space-y-6">
-                            {/* ── Bio Section ── */}
                             {profile.bio && (
-                                <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
+                                <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                                     <div className="flex items-center gap-3 mb-6 relative z-10">
                                         <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                         <h3 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
                                             Bio
                                         </h3>
                                     </div>
-
                                     <div className="relative z-10">
                                         <p className="text-[13px] text-white/60 leading-relaxed font-medium italic">
-                                            <span className="text-[#e87315] mr-2"></span>
                                             {profile.bio}
                                         </p>
                                     </div>
-
-
-
-                                    {/* Architect Accents */}
                                     <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                                     <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                                 </div>
                             )}
 
-                            {/* ── Skills Section ── */}
                             {profile.skills?.length > 0 && (
-                                <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
+                                <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                                     <div className="flex items-center gap-3 mb-8 relative z-10">
                                         <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                         <h3 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
                                             Skills
                                         </h3>
                                     </div>
-
                                     <div className="flex flex-wrap gap-3 relative z-10">
                                         {profile.skills.map((skill, i) => (
                                             <div
@@ -385,28 +349,20 @@ const StudentProfile = () => {
                                             </div>
                                         ))}
                                     </div>
-
-
-                                    {/* Architect Accents */}
                                     <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                                     <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                                 </div>
                             )}
                         </div>
 
-                        {/* Quick info */}
-                        <div className="relative bg-[#080808] p-8 border border-white/[0.03] overflow-hidden group">
-                            {/* ── Section Header ── */}
+                        <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                             <div className="flex items-center gap-3 mb-8 relative z-10">
                                 <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
                                 <h3 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
                                     Quick Info
                                 </h3>
                             </div>
-
-                            {/* ── Data Grid ── */}
                             <div className="space-y-5 relative z-10">
-                                {/* Role */}
                                 <div className="flex justify-between items-end border-b border-white/[0.03] pb-2 group/item">
                                     <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-hover/item:text-[#e87315] transition-colors">
                                         Role
@@ -415,8 +371,6 @@ const StudentProfile = () => {
                                         {profile.role || 'Member'}
                                     </span>
                                 </div>
-
-                                {/* Projects */}
                                 <div className="flex justify-between items-end border-b border-white/[0.03] pb-2 group/item">
                                     <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-hover/item:text-[#e87315] transition-colors">
                                         Projects
@@ -428,8 +382,6 @@ const StudentProfile = () => {
                                         <div className="w-8 h-[1px] bg-white/10" />
                                     </div>
                                 </div>
-
-                                {/* College */}
                                 {profile.college && (
                                     <div className="flex justify-between items-start border-b border-white/[0.03] pb-2 group/item">
                                         <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mt-1 group-hover/item:text-[#e87315] transition-colors">
@@ -440,8 +392,6 @@ const StudentProfile = () => {
                                         </span>
                                     </div>
                                 )}
-
-                                {/* Location */}
                                 {profile.location && (
                                     <div className="flex justify-between items-end border-b border-white/[0.03] pb-2 group/item">
                                         <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-hover/item:text-[#e87315] transition-colors">
@@ -454,21 +404,13 @@ const StudentProfile = () => {
                                     </div>
                                 )}
                             </div>
-
-                            {/* ── Tech Background Elements ── */}
                             <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-white/[0.02] -mr-12 -mt-12 rotate-45 pointer-events-none" />
-
-
-
-                            {/* Architect Signatures */}
                             <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                             <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                         </div>
                     </aside>
 
-                    {/* RIGHT: Projects */}
-                    <div className="lg:col-span-8">
-                        {/* ── Section Header ── */}
+                    <div className="lg:col-span-8 mt-6 lg:mt-0">
                         <div className="flex items-center gap-3 mb-10">
                             <div className="w-2 h-2 bg-[#e87315] rotate-45 animate-pulse" />
                             <h3 className="text-[12px] font-black tracking-[0.5em] uppercase text-white italic">
@@ -478,7 +420,7 @@ const StudentProfile = () => {
                         </div>
 
                         {projects.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 {projects.map((project, index) => (
                                     <motion.div
                                         key={project._id}
@@ -488,7 +430,6 @@ const StudentProfile = () => {
                                         onClick={() => navigate(`/dashboard/project/${project._id}`)}
                                         className="group relative bg-[#080808] border border-white/[0.03] overflow-hidden cursor-pointer transition-all duration-500 hover:border-[#e87315]/40 shadow-2xl"
                                     >
-                                        {/* Image Container */}
                                         <div className="relative h-44 overflow-hidden">
                                             {project.images?.[0] ? (
                                                 <img
@@ -497,7 +438,7 @@ const StudentProfile = () => {
                                                     alt={project.title}
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center group-hover:bg-[#111]" >
+                                                <div className="w-full h-full bg-[#0c0c0c] flex items-center justify-center group-hover:bg-[#111]">
                                                     <div className="relative">
                                                         <div className="w-12 h-12 border border-[#e87315]/20 rotate-45 flex items-center justify-center">
                                                             <span className="text-[#e87315] font-black text-xl -rotate-45">P</span>
@@ -505,32 +446,22 @@ const StudentProfile = () => {
                                                     </div>
                                                 </div>
                                             )}
-
-                                            {/* Overlays */}
                                             <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent opacity-80" />
                                             <div className="absolute inset-0 bg-[#e87315]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                                            {/* Stage Badge */}
                                             <div className="absolute top-4 left-4 z-10">
                                                 <span className={`px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] backdrop-blur-md border border-white/10 shadow-xl ${getStageBadge(project.stage)}`}>
-                                 {project.stage}
+                                                    {project.stage}
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Content */}
                                         <div className="p-5 relative">
-                                            {/* Decorative Line */}
                                             <div className="absolute top-0 left-5 w-8 h-[2px] bg-[#e87315] -translate-y-1/2 group-hover:w-20 transition-all duration-500" />
-
                                             <h4 className="text-[14px] font-black text-white uppercase tracking-wider group-hover:text-[#e87315] transition-colors mb-2 truncate">
                                                 {project.title}
                                             </h4>
-
                                             <p className="text-[11px] text-white/40 font-medium line-clamp-2 mb-5 leading-relaxed italic">
                                                 {project.tagline}
                                             </p>
-
                                             <div className="flex items-center justify-between pt-4 border-t border-white/[0.03]">
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex items-center gap-1.5 text-[9px] font-black text-white/30 group-hover:text-white/60 transition-colors">
@@ -546,14 +477,11 @@ const StudentProfile = () => {
                                                         {project.likes?.length || 0}
                                                     </div>
                                                 </div>
-
                                                 <span className="text-[8px] font-black text-[#e87315] uppercase tracking-[0.2em] bg-[#e87315]/5 px-2 py-0.5 border border-[#e87315]/10">
                                                     {project.category}
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Technical Accents */}
                                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-[#e87315] opacity-0 group-hover:opacity-100 transition-opacity" />
                                         <div className="absolute top-0 right-0 w-[1px] h-0 bg-gradient-to-b from-[#e87315] to-transparent group-hover:h-full transition-all duration-700" />
                                     </motion.div>

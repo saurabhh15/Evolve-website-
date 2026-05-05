@@ -6,7 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import useLenis from './hooks/useLenis';
 // Lazy loading all route components to significantly improve initial page load speed
 const Landing = lazy(() => import('./pages/Landing'));
-const Onboarding = lazy(() => import("./pages/OnboardingProtocol.jsx"));
+const Onboarding = lazy(() => import("./pages/Onboarding.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx")); 
 const GetStarted = lazy(() => import("./pages/GetStarted"));
 const Success = lazy(() => import('./pages/Success.jsx'));
