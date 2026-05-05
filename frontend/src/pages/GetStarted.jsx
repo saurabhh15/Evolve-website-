@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../services/api';
 
 const GetStarted = () => {
     const { login, setUser } = useAuth();
@@ -171,7 +172,7 @@ const GetStarted = () => {
                 if (user.hasCompletedOnboarding) navigate('/dashboard');
                 else navigate('/onboarding-protocol');
             } else {
-                const res = await axios.post('https://evolve-website.onrender.com/api/auth/register', {
+                const res = await api.post('/auth/register', {
                     name: fullName,
                     email: formData.email,
                     password: formData.password
@@ -197,9 +198,11 @@ const GetStarted = () => {
     };
 
     const handleSocialAuth = (provider) => {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const base = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
         const authUrls = {
-            Google: 'https://evolve-website.onrender.com/api/auth/google',
-            GitHub: 'https://evolve-website.onrender.com/api/auth/github'
+            Google: `${base}/api/auth/google`,
+            GitHub: `${base}/api/auth/github`
         };
         window.location.href = authUrls[provider];
     };

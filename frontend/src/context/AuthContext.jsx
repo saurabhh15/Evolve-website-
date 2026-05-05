@@ -7,6 +7,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Dynamic URL logic so it works locally and in production without breaking
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const API_URL = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
+
   // 1. Check if user is logged in on refresh
   useEffect(() => {
     const initAuth = async () => {
@@ -22,9 +26,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         try {
-          const res = await axios.get(
-            "https://evolve-website.onrender.com/api/auth/me",
-          );
+          const res = await axios.get(`${API_URL}/api/auth/me`);
 
           //  UPDATE BOTH STATE + LOCALSTORAGE
           setUser(res.data);
@@ -45,8 +47,8 @@ export const AuthProvider = ({ children }) => {
   // 2. Login Function
   const login = async (email, password) => {
     const res = await axios.post(
-      "https://evolve-website.onrender.com/api/auth/login",
-      { email, password },
+      `${API_URL}/api/auth/login`,
+      { email, password }
     );
 
     localStorage.setItem("token", res.data.token);

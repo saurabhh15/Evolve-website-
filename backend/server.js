@@ -11,6 +11,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const Message = require('./models/Message');
+const path = require('path');
 
 // --- Environment Variable Checks ---
 if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
@@ -41,7 +42,13 @@ const io = new Server(server, {
 app.set('io', io);
 
 // --- Security & Utility Middleware ---
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Serve static files from the 'public' directory (for default images)
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json({ limit: '10kb' }));

@@ -120,7 +120,7 @@ exports.completeOnboarding = async (req, res, next) => {
 
     console.log("EXTRACTED GENDER:", gender);
 
-    //  FORCE IMAGE SET
+    // FORCE IMAGE SET
     let profileImage = "";
 
     if (gender === "female") {
@@ -151,6 +151,44 @@ exports.completeOnboarding = async (req, res, next) => {
 
   } catch (error) {
     console.error("Onboarding Error:", error);
+    next(error);
+  }
+};
+
+// CHANGE PASSWORD
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if user registered via Google/Github and has no password
+    if (!user.password) {
+      return res.status(400).json({ message: 'Account uses social login. Please login with Google/Github.' });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid current password' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update the password in database
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: 'Password successfully updated' });
+
+  } catch (error) {
+    console.error("Password Change Error:", error);
     next(error);
   }
 };

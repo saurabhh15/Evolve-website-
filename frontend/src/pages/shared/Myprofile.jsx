@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { userAPI } from '../../services/api';
+import api, { userAPI } from '../../services/api';
 import { MapPin, X, LogOut, Save, Eye, EyeOff } from 'lucide-react';
-
 
 const MyProfile = () => {
     const { user, setUser, logout } = useAuth();
@@ -35,6 +34,8 @@ const MyProfile = () => {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState(null);
 
+    // Password Section States
+    const [showPasswordSection, setShowPasswordSection] = useState(false);
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -42,12 +43,14 @@ const MyProfile = () => {
     });
     const [showPasswords, setShowPasswords] = useState(false);
     const [passwordError, setPasswordError] = useState(null);
+    const [passwordSuccess, setPasswordSuccess] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
 
     useEffect(() => {
         if (user) {
             const savedImage = user.profileImage || '';
-            const cleanImage = savedImage.includes('freepik.com') ? '' : savedImage;
+            // Hide freepik links AND backend local default paths (e.g. /female.jpg) from the input field
+            const cleanImage = (savedImage.includes('freepik.com') || savedImage.startsWith('/')) ? '' : savedImage;
 
             setForm({
                 name: user.name || '',
@@ -70,11 +73,40 @@ const MyProfile = () => {
         }
     }, [user]);
 
+    const getDisplayImage = () => {
+        // 1. Show live preview instantly if the user is typing/pasting a new link
+        if (form.profileImage && form.profileImage.trim() !== '' && !form.profileImage.startsWith('/')) {
+            return form.profileImage;
+        }
+
+        // 2. Otherwise fallback to the actual saved profile image
+        const saved = user?.profileImage;
+
+        if (!saved) {
+            // Fallback to gender default (loads directly from frontend public folder)
+            return user?.gender === 'female' ? '/female.jpg' : '/male.jpg';
+        }
+
+        if (saved.startsWith('/')) {
+            // Local path (loads directly from frontend public folder)
+            return saved;
+        }
+
+        return saved;
+    };
+
     const handleSave = async () => {
         try {
             setSaving(true);
             setError(null);
-            const response = await userAPI.updateProfile(form);
+
+            // Create payload and prevent default image from being wiped out if input is empty
+            const payload = { ...form };
+            if (!payload.profileImage || payload.profileImage.trim() === '') {
+                payload.profileImage = user?.gender === 'female' ? '/female.jpg' : '/male.jpg';
+            }
+
+            const response = await userAPI.updateProfile(payload);
             setUser(response.data);
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
@@ -108,18 +140,6 @@ const MyProfile = () => {
             }
             setExpertiseInput('');
         }
-    };
-
-    
-
-    const getDisplayImage = () => {
-        if (!user?.profileImage) return '';
-        // if it's default image from backend
-        if (user.profileImage.startsWith('/')) {
-            return `https://evolve-website.onrender.com${user.profileImage}`;
-        }
-
-        return user.profileImage;
     };
 
     return (
@@ -172,39 +192,6 @@ const MyProfile = () => {
                                 </div>
                             )}
                         </div>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className={`group/save relative flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-3.5 sm:py-4 overflow-hidden transition-all duration-500 border ${saveSuccess
-                                ? 'bg-green-500/5 border-green-500/30 text-green-400'
-                                : 'bg-transparent border-[#e87315] text-[#e87315]'
-                                }`}
-                        >
-                            {!saveSuccess && (
-                                <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/save:translate-y-0 transition-transform duration-300 ease-out" />
-                            )}
-
-                            <div className={`relative z-10 flex items-center gap-3 font-black text-[10px] uppercase tracking-[0.3em] transition-colors duration-300 ${!saveSuccess && 'group-hover/save:text-black'
-                                }`}>
-                                {saving ? (
-                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                ) : saveSuccess ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />
-                                        <span>Updating..</span>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <Save size={14} className="group-hover/save:scale-110 transition-transform" />
-                                        <span>Save Changes</span>
-                                    </>
-                                )}
-                            </div>
-
-                            <div className={`absolute top-0 right-0 w-1.5 h-1.5 transition-colors ${saveSuccess ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/save:bg-black'
-                                }`} />
-                        </button>
                     </div>
                 </div>
 
@@ -213,6 +200,8 @@ const MyProfile = () => {
                 )}
 
                 <div className="space-y-6 mt-8">
+
+                    {/* Basic Info */}
                     <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
@@ -292,6 +281,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors duration-500" />
                     </div>
 
+                    {/* Profile Image */}
                     <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="absolute top-40 -right-10 -rotate-35 p-4 opacity-[0.02] select-none pointer-events-none hidden sm:block">
                             <span className="text-[60px] font-black text-white italic leading-none tracking-tighter">Image</span>
@@ -311,6 +301,9 @@ const MyProfile = () => {
                                         src={getDisplayImage()}
                                         alt="Preview"
                                         className="w-full h-full object-cover grayscale group-hover/preview:grayscale-0 transition-all duration-700"
+                                        onError={(e) => {
+                                            e.target.src = `https://ui-avatars.com/api/?background=111111&color=e87315&size=400&name=${user?.name}&bold=true`;
+                                        }}
                                     />
                                 </div>
                                 <div className="absolute -top-1 -left-1 w-2 h-2 border-t border-l border-[#e87315] hidden sm:block" />
@@ -328,7 +321,7 @@ const MyProfile = () => {
                                         value={form.profileImage}
                                         onChange={e => setForm(prev => ({ ...prev, profileImage: e.target.value }))}
                                         placeholder="EXTERNAL_LINK_REQUIRED..."
-                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono tracking-tight"
+                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/40 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono tracking-tight"
                                     />
                                     <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
                                 </div>
@@ -347,6 +340,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
+                    {/* Cover Image */}
                     <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="absolute top-60 right-160 rotate-20 p-4 opacity-[0.02] select-none pointer-events-none hidden lg:block">
                             <span className="text-[60px] font-black text-white italic leading-none tracking-tighter uppercase">Header</span>
@@ -370,7 +364,7 @@ const MyProfile = () => {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-white/5">
-                                            <span className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em] text-center px-4">Add a profile header...</span>
+                                            <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] text-center px-4">Add a profile header...</span>
                                         </div>
                                     )}
                                     <div className="absolute top-2 left-2 flex gap-1">
@@ -385,7 +379,7 @@ const MyProfile = () => {
                                         value={form.coverImage}
                                         onChange={e => setForm(prev => ({ ...prev, coverImage: e.target.value }))}
                                         placeholder="IMG SOURCE URL"
-                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono tracking-tight"
+                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/40 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono tracking-tight"
                                     />
                                     <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
                                 </div>
@@ -403,6 +397,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
+                    {/* Social Links */}
                     <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
@@ -412,53 +407,27 @@ const MyProfile = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                            <div className="space-y-2 group/input">
-                                <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
-                                    LinkedIn
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="url"
-                                        value={form.linkedIn}
-                                        onChange={e => setForm(prev => ({ ...prev, linkedIn: e.target.value }))}
-                                        placeholder="https://linkedin.com/in/..."
-                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[12px] text-white placeholder:text-white/5 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
-                                    />
-                                    <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-500" />
+                            {[
+                                { label: 'LinkedIn', key: 'linkedIn', placeholder: 'https://linkedin.com/in/...' },
+                                { label: 'GitHub', key: 'github', placeholder: 'https://github.com/...' },
+                                { label: 'Website', key: 'website', placeholder: 'https://...' },
+                            ].map(({ label, key, placeholder }) => (
+                                <div key={key} className="space-y-2 group/input">
+                                    <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
+                                        {label}
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="url"
+                                            value={form[key]}
+                                            onChange={e => setForm(prev => ({ ...prev, [key]: e.target.value }))}
+                                            placeholder={placeholder}
+                                            className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[12px] text-white placeholder:text-white/40 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
+                                        />
+                                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-500" />
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div className="space-y-2 group/input">
-                                <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
-                                    GitHub
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="url"
-                                        value={form.github}
-                                        onChange={e => setForm(prev => ({ ...prev, github: e.target.value }))}
-                                        placeholder="https://github.com/..."
-                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[12px] text-white placeholder:text-white/5 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
-                                    />
-                                    <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-500" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 group/input">
-                                <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors flex items-center gap-2">
-                                    Website
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="url"
-                                        value={form.website}
-                                        onChange={e => setForm(prev => ({ ...prev, website: e.target.value }))}
-                                        placeholder="https://..."
-                                        className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[12px] text-white placeholder:text-white/5 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
-                                    />
-                                    <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-500" />
-                                </div>
-                            </div>
+                            ))}
                         </div>
 
                         <div className="absolute -bottom-2 -right-2 w-24 h-24 bg-[#e87315]/[0.02] rounded-full blur-2xl pointer-events-none" />
@@ -466,6 +435,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
+                    {/* Skills */}
                     <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
@@ -492,9 +462,8 @@ const MyProfile = () => {
                                         </button>
                                     </div>
                                 ))}
-
                                 {form.skills.length === 0 && (
-                                    <div className="text-[11px] font-medium text-white/10 uppercase tracking-[0.2em] py-2">
+                                    <div className="text-[11px] font-medium text-white/40 uppercase tracking-[0.2em] py-2">
                                         Enter a Skill
                                     </div>
                                 )}
@@ -507,7 +476,7 @@ const MyProfile = () => {
                                     value={skillInput}
                                     onChange={e => setSkillInput(e.target.value)}
                                     onKeyDown={handleAddSkill}
-                                    className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono italic"
+                                    className="w-full bg-white/[0.02] border border-white/5 px-4 py-4 text-[12px] text-white placeholder:text-white/40 focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono italic"
                                 />
                                 <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
                                 <div className="absolute top-0 right-0 w-1 h-1 bg-white/5 group-focus-within/input:bg-[#e87315] transition-colors" />
@@ -521,6 +490,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
+                    {/* Mentor Settings */}
                     {user?.role === 'mentor' && (
                         <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
                             <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
@@ -586,7 +556,7 @@ const MyProfile = () => {
 
                                 <div className="flex flex-col md:flex-row md:items-end gap-6 sm:gap-8 pt-2">
                                     <div className="w-full md:w-auto space-y-3 flex flex-col">
-                                        <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]"> Alumni</label>
+                                        <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Alumni</label>
                                         <button
                                             onClick={() => setForm(prev => ({ ...prev, isAlumni: !prev.isAlumni }))}
                                             className={`w-full md:w-32 py-3 text-[10px] font-black uppercase tracking-[0.2em] border transition-all duration-300 ${form.isAlumni
@@ -634,7 +604,7 @@ const MyProfile = () => {
                                             value={expertiseInput}
                                             onChange={e => setExpertiseInput(e.target.value)}
                                             onKeyDown={handleAddExpertise}
-                                            className="w-full bg-transparent border-b border-white/10 py-3 text-[12px] text-white placeholder:text-white/10 focus:outline-none focus:border-[#e87315] transition-all font-mono italic"
+                                            className="w-full bg-transparent border-b border-white/10 py-3 text-[12px] text-white placeholder:text-white/40 focus:outline-none focus:border-[#e87315] transition-all font-mono italic"
                                         />
                                     </div>
                                 </div>
@@ -645,87 +615,168 @@ const MyProfile = () => {
                         </div>
                     )}
 
-                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
-                        <div className="flex items-center justify-between mb-8 sm:mb-10 relative z-10">
+                    {/* Change Password — buttery smooth animated grid section */}
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] group">
+                        {/* Header — always visible, clickable */}
+                        <div
+                            className="flex items-center justify-between relative z-10 cursor-pointer select-none"
+                            onClick={() => setShowPasswordSection(!showPasswordSection)}
+                        >
                             <div className="flex items-center gap-3">
-                                <div className="w-1.5 h-1.5 bg-[#e87315] rotate-45" />
-                                <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic">
-                                    Change Password
+                                <div className={`w-1.5 h-1.5 bg-[#e87315] transition-transform duration-300 ${showPasswordSection ? 'rotate-45' : 'rotate-0'}`} />
+                                <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] italic hover:text-[#e87315] transition-colors">
+                                    Change Password {showPasswordSection ? '(-)' : '(+)'}
                                 </h2>
                             </div>
-                            <button
-                                onClick={() => setShowPasswords(!showPasswords)}
-                                className="flex items-center gap-2 px-3 py-1 bg-white/[0.02] border border-white/5 rounded text-[10px] font-bold text-white/40 hover:text-[#e87315] hover:border-[#e87315]/30 transition-all uppercase tracking-tighter"
-                            >
-                                <span>{showPasswords ? 'Hide' : 'Show'}</span>
-                                {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
-                            </button>
-                        </div>
 
-                        <div className="space-y-6 sm:space-y-8 relative z-10">
-                            {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
-                                <div key={field} className="space-y-2 group/input">
-                                    <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
-                                        {field === 'currentPassword' ? 'Current Password' : field === 'newPassword' ? 'New Password' : 'Re-Enter New password'}
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPasswords ? 'text' : 'password'}
-                                            value={passwordForm[field]}
-                                            onChange={e => setPasswordForm(prev => ({ ...prev, [field]: e.target.value }))}
-                                            className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[13px] text-white tracking-[0.2em] focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
-                                        />
-                                        <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-8 sm:mt-10 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10 border-t border-white/5 pt-8">
-                            <div className="min-h-[20px] w-full text-center md:text-left">
-                                {passwordError && (
-                                    <div className="flex items-center justify-center md:justify-start gap-2 text-red-500 animate-in fade-in slide-in-from-left-2">
-                                        <div className="w-1 h-1 bg-red-500 animate-pulse" />
-                                        <p className="text-[10px] font-black uppercase tracking-widest">{passwordError}</p>
-                                    </div>
-                                )}
+                            {/* Show/Hide passwords toggle — only visible when section is open */}
+                            <div className={`transition-opacity duration-300 ${showPasswordSection ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowPasswords(!showPasswords);
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-1 bg-white/[0.02] border border-white/5 rounded text-[10px] font-bold text-white/40 hover:text-[#e87315] hover:border-[#e87315]/30 transition-all uppercase tracking-tighter"
+                                >
+                                    <span>{showPasswords ? 'Hide' : 'Show'}</span>
+                                    {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />}
+                                </button>
                             </div>
+                        </div>
 
-                            <button
-                                disabled={passwordSaving}
-                                onClick={async () => {
-                                    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-                                        setPasswordError('Passwords do not match.');
-                                        return;
-                                    }
-                                    if (passwordForm.newPassword.length < 6) {
-                                        setPasswordError('Min length: 06 characters.');
-                                        return;
-                                    }
-                                    setPasswordError(null);
-                                    setPasswordSaving(true);
-                                    try {
-                                        console.log('Change password:', passwordForm);
-                                        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                                    } catch (err) {
-                                        setPasswordError('Security Update Failed.');
-                                    } finally {
-                                        setPasswordSaving(false);
-                                    }
-                                }}
-                                className="group/btn relative w-full sm:w-auto px-8 py-3.5 sm:py-3 overflow-hidden bg-transparent border border-[#e87315] transition-all duration-300 disabled:opacity-50 text-center flex justify-center"
-                            >
-                                <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-                                <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em] text-[#e87315] group-hover/btn:text-black transition-colors">
-                                    {passwordSaving ? 'Syncing...' : 'Commit Changes'}
-                                </span>
-                            </button>
+                        {/* Smooth animated content wrapper */}
+                        <div
+                            className={`grid transition-all duration-500 ease-in-out ${
+                                showPasswordSection ? 'grid-rows-[1fr] opacity-100 mt-8' : 'grid-rows-[0fr] opacity-0 mt-0'
+                            }`}
+                        >
+                            <div className="overflow-hidden">
+                                <div className="space-y-6 sm:space-y-8 relative z-10">
+                                    {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
+                                        <div key={field} className="space-y-2 group/input">
+                                            <label className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] group-focus-within/input:text-[#e87315] transition-colors">
+                                                {field === 'currentPassword' ? 'Current Password' : field === 'newPassword' ? 'New Password' : 'Re-Enter New Password'}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showPasswords ? 'text' : 'password'}
+                                                    value={passwordForm[field]}
+                                                    onChange={e => setPasswordForm(prev => ({ ...prev, [field]: e.target.value }))}
+                                                    className="w-full bg-white/[0.02] border border-white/5 px-4 py-3 text-[13px] text-white tracking-[0.2em] focus:outline-none focus:border-[#e87315]/30 focus:bg-[#e87315]/[0.01] transition-all font-mono"
+                                                />
+                                                <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-[#e87315] group-focus-within/input:w-full transition-all duration-700" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-8 sm:mt-10 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-white/5 pt-8">
+                                    <div className="min-h-[20px] w-full text-center md:text-left">
+                                        {passwordError && (
+                                            <div className="flex items-center justify-center md:justify-start gap-2 text-red-500 animate-in fade-in slide-in-from-left-2">
+                                                <div className="w-1 h-1 bg-red-500 animate-pulse" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">{passwordError}</p>
+                                            </div>
+                                        )}
+                                        {passwordSuccess && (
+                                            <div className="flex items-center justify-center md:justify-start gap-2 text-green-500 animate-in fade-in slide-in-from-left-2">
+                                                <div className="w-1 h-1 bg-green-500 animate-pulse" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">Password successfully updated</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        disabled={passwordSaving}
+                                        onClick={async () => {
+                                            if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+                                                setPasswordError('Passwords do not match.');
+                                                setPasswordSuccess(false);
+                                                return;
+                                            }
+                                            if (passwordForm.newPassword.length < 6) {
+                                                setPasswordError('Min length: 06 characters.');
+                                                setPasswordSuccess(false);
+                                                return;
+                                            }
+                                            setPasswordError(null);
+                                            setPasswordSuccess(false);
+                                            setPasswordSaving(true);
+                                            try {
+                                                await api.put('/auth/change-password', {
+                                                    currentPassword: passwordForm.currentPassword,
+                                                    newPassword: passwordForm.newPassword
+                                                });
+                                                
+                                                setPasswordSuccess(true);
+                                                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                                                setTimeout(() => {
+                                                    setPasswordSuccess(false);
+                                                    setShowPasswordSection(false);
+                                                }, 3000);
+                                            } catch (err) {
+                                                setPasswordError(err.response?.data?.message || 'Security Update Failed. Check current password.');
+                                            } finally {
+                                                setPasswordSaving(false);
+                                            }
+                                        }}
+                                        className="group/btn relative w-full sm:w-auto px-8 py-3.5 sm:py-3 overflow-hidden bg-transparent border border-[#e87315] transition-all duration-300 disabled:opacity-50 text-center flex justify-center"
+                                    >
+                                        <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                                        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em] text-[#e87315] group-hover/btn:text-black transition-colors">
+                                            {passwordSaving ? 'Syncing...' : 'Update Password'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
                         <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
+                    {/* Main Primary Save Action Block */}
+                    <div className="relative bg-[#080808] p-6 sm:p-8 border border-white/[0.03] overflow-hidden group">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
+                            <div className="text-center sm:text-left">
+                                <h2 className="text-[12px] font-black text-white uppercase tracking-[0.3em] mb-1">Save Profile Updates</h2>
+                                <p className="text-[10px] font-bold text-white/30 tracking-widest uppercase">Commit all changes made to your profile configuration.</p>
+                            </div>
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className={`group/save relative flex items-center justify-center gap-3 w-full sm:w-auto px-10 py-4 sm:py-5 overflow-hidden transition-all duration-500 border ${saveSuccess
+                                    ? 'bg-green-500/10 border-green-500/50 text-green-400'
+                                    : 'bg-transparent border-[#e87315] text-[#e87315]'
+                                    }`}
+                            >
+                                {!saveSuccess && (
+                                    <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover/save:translate-y-0 transition-transform duration-300 ease-out" />
+                                )}
+
+                                <div className={`relative z-10 flex items-center gap-3 font-black text-[11px] uppercase tracking-[0.3em] transition-colors duration-300 ${!saveSuccess && 'group-hover/save:text-black'}`}>
+                                    {saving ? (
+                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    ) : saveSuccess ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                                            <span>Profile Updated</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Save size={16} className="group-hover/save:scale-110 transition-transform" />
+                                            <span>Save Changes</span>
+                                        </>
+                                    )}
+                                </div>
+                                <div className={`absolute top-0 right-0 w-2 h-2 transition-colors ${saveSuccess ? 'bg-green-500/50' : 'bg-[#e87315] group-hover/save:bg-black'}`} />
+                            </button>
+                        </div>
+                        <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]" />
+                        <div className="absolute bottom-0 right-0 w-1 h-1 bg-white/10 group-hover:bg-[#e87315] transition-colors" />
+                    </div>
+
+                    {/* Danger Zone */}
                     <div className="bg-red-500/[0.04] border border-red-500/20 rounded-2xl p-6">
                         <h2 className="text-[10px] font-black text-red-500/70 uppercase tracking-widest mb-4">Danger Zone</h2>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

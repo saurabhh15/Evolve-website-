@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-// Base URL for your backend
-const API_BASE_URL = 'https://evolve-website.onrender.com/api';
+// Dynamically choose the backend URL based on where the frontend is running
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isLocalhost 
+    ? 'http://localhost:5000/api' 
+    : 'https://evolve-website.onrender.com/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -25,17 +28,16 @@ api.interceptors.request.use(
     }
 );
 
-// ========================================
+
 // PROJECTS API
-// ========================================
+
 export const projectAPI = {
     // Get all projects
     getAll: (params) => api.get('/projects', { params }),
 
     // Search/filter projects
     search: (params) => api.get('/projects/search', { params }),
-    // Example: projectAPI.search({ category: 'AI/ML', stage: 'mvp' })
-
+    
     // Get user's own projects
     getMyProjects: () => api.get('/projects/my-projects'),
 
@@ -63,9 +65,9 @@ export const projectAPI = {
         api.delete(`/projects/${projectId}/team/${userId}`),
 };
 
-// ========================================
+
 // USERS API
-// ========================================
+
 export const userAPI = {
     // Get user by ID
     getById: (id) => api.get(`/users/${id}`),
@@ -75,8 +77,7 @@ export const userAPI = {
 
     // Search users
     search: (params) => api.get('/users/search', { params }),
-    // Example: userAPI.search({ role: 'mentor', skill: 'React' })
-
+    
     // Get mentors
     getMentors: (skill) => api.get('/users/mentors', { params: { skill } }),
 
@@ -84,14 +85,13 @@ export const userAPI = {
     getUserProjects: (userId) => api.get(`/users/${userId}/projects`),
 };
 
-// ========================================
+
 // CONNECTIONS API
-// ========================================
+
 export const connectionAPI = {
     // Get all connections (with optional filters)
     getAll: (params) => api.get('/connections', { params }),
-    // Example: connectionAPI.getAll({ status: 'pending', type: 'mentor-request' })
-
+    
     // Get received requests
     getReceived: () => api.get('/connections/received'),
 
@@ -103,19 +103,17 @@ export const connectionAPI = {
 
     // Send connection request
     send: (data) => api.post('/connections', data),
-    // Example: connectionAPI.send({ to: 'userId123', type: 'mentor-request', message: 'Hi!' })
-
+    
     // Accept/reject request
     updateStatus: (id, status) => api.put(`/connections/${id}`, { status }),
-    // Example: connectionAPI.updateStatus('connId', 'accepted')
-
+    
     // Delete/cancel request
     delete: (id) => api.delete(`/connections/${id}`),
 };
 
-// ========================================
+
 // MESSAGES API
-// ========================================
+
 export const messageAPI = {
     // Get all conversations
     getConversations: () => api.get('/messages/conversations'),
@@ -141,9 +139,7 @@ export const messageAPI = {
     delete: (messageId) => api.delete(`/messages/${messageId}`),
 };
 
-// ========================================
 // COMMENTS API
-// ========================================
 export const commentAPI = {
     // Get all comments for a project
     getAll: (projectId) => api.get(`/projects/${projectId}/comments`),
@@ -156,9 +152,8 @@ export const commentAPI = {
     delete: (projectId, commentId) => api.delete(`/projects/${projectId}/comments/${commentId}`),
 };
 
-// ========================================
 // NOTIFICATIONS API
-// ========================================
+
 export const notificationAPI = {
     // Get all notifications
     getAll: () => api.get('/notifications'),
@@ -173,16 +168,18 @@ export const notificationAPI = {
     delete: (id) => api.delete(`/notifications/${id}`),
 };
 
-// ========================================
+
 // LEARNING GOALS API
-// ========================================
+
 export const learningGoalAPI = {
     getAll: () => api.get('/learning-goals'),
     add: (skill, target) => api.post('/learning-goals', { skill, target }),
     delete: (id) => api.delete(`/learning-goals/${id}`),
 };
 
-//NOtes api
+
+// NOTES API
+
 export const noteAPI = {
     getAll: (menteeId) => api.get(`/notes/${menteeId}`),
     add: (menteeId, content) => api.post(`/notes/${menteeId}`, { content }),
@@ -191,7 +188,7 @@ export const noteAPI = {
 };
 
 
-//Application (project)
+// APPLICATIONS API
 
 export const applicationAPI = {
   apply: (projectId, data) => api.post(`/projects/${projectId}/apply`, data),
@@ -200,15 +197,16 @@ export const applicationAPI = {
   updateStatus: (id, status) => api.put(`/applications/${id}`, { status }),
 };
 
-// ========================================
 // AUTH API
-// ========================================
 export const authAPI = {
     // Get current user
     getMe: () => api.get('/auth/me'),
 
     // Update onboarding
     completeOnboarding: (data) => api.patch('/auth/onboarding', data),
+
+    // Change Password
+    changePassword: (data) => api.put('/auth/change-password', data),
 };
 
 // Export the base api instance in case you need custom calls

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import api from '../services/api';
 
 const AuthCallback = () => {
     const navigate = useNavigate();
@@ -20,7 +21,7 @@ const AuthCallback = () => {
 
                 // Fetch user data
                 try {
-                    const res = await axios.get('https://evolve-website.onrender.com/api/auth/me');
+                    const res = await api.get('/auth/me');
                     setUser(res.data);
 
                     // Redirect based on onboarding status

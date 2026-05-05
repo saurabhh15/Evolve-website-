@@ -6,9 +6,14 @@ const {
   register, 
   login, 
   getMe, 
-  completeOnboarding 
+  completeOnboarding,
+  changePassword
 } = require('../controllers/authController');
 const auth = require('../middleware/auth');
+
+// Dynamic Frontend URL check
+const CLIENT_URL = process.env.FRONTEND_URL || 'http://localhost:5174';
+
 // signIn
 router.post('/register', register);
 // Login
@@ -21,8 +26,10 @@ router.patch('/onboarding', auth, (req, res, next) => {
   next();
 }, completeOnboarding);
 
+// Change Password
+router.put('/change-password', auth, changePassword);
 
-//  GOOGLE OAuth ROUTES 
+// GOOGLE OAuth ROUTES 
 router.get('/google', 
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
@@ -33,7 +40,7 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { 
     session: false, 
-    failureRedirect: 'http://localhost:5174/get-started' 
+    failureRedirect: `${CLIENT_URL}/get-started` 
   }),
   (req, res) => {
     console.log('Google callback hit, user:', req.user.email);
@@ -45,9 +52,9 @@ router.get('/google/callback',
       { expiresIn: '7d' }
     );
     
-    // Redirect to frontend with token
+    // Redirect to dynamic frontend with token
     const needsOnboarding = !req.user.hasCompletedOnboarding;
-    res.redirect(`http://localhost:5174/auth/callback?token=${token}&onboarding=${needsOnboarding}`);
+    res.redirect(`${CLIENT_URL}/auth/callback?token=${token}&onboarding=${needsOnboarding}`);
   }
 );
 
@@ -62,7 +69,7 @@ router.get('/github',
 router.get('/github/callback',
   passport.authenticate('github', { 
     session: false, 
-    failureRedirect: 'http://localhost:5174/get-started' 
+    failureRedirect: `${CLIENT_URL}/get-started` 
   }),
   (req, res) => {
     console.log('GitHub callback hit, user:', req.user.email);
@@ -74,7 +81,7 @@ router.get('/github/callback',
     );
     
     const needsOnboarding = !req.user.hasCompletedOnboarding;
-    res.redirect(`http://localhost:5174/auth/callback?token=${token}&onboarding=${needsOnboarding}`);
+    res.redirect(`${CLIENT_URL}/auth/callback?token=${token}&onboarding=${needsOnboarding}`);
   }
 );
 
