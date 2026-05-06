@@ -1,31 +1,25 @@
 import { io } from 'socket.io-client';
 
-let socket = null;
+let socket;
 
 export const initSocket = (token) => {
-  if (socket) return socket;
-  
-  socket = io('http://localhost:5000', {
-    auth: { token },
-    transports: ['websocket']
-  });
+    // Automatically detect if we are on localhost or the live site
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const SOCKET_URL = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
 
-  socket.on('connect', () => {
-    console.log('Socket connected');
-  });
+    socket = io(SOCKET_URL, {
+        auth: {
+            token: token
+        }
+    });
 
-  socket.on('connect_error', (err) => {
-    console.error('Socket connection error:', err.message);
-  });
+    return socket;
+};
 
-  return socket;
+export const disconnectSocket = () => {
+    if (socket) {
+        socket.disconnect();
+    }
 };
 
 export const getSocket = () => socket;
-
-export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
-};
