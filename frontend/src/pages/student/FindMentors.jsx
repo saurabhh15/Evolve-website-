@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 import { userAPI, connectionAPI } from '../../services/api';
 
-
-
 const CATEGORIES = ['All Mentors', 'Engineering', 'Product & Design', 'Business & Growth'];
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
@@ -52,7 +50,6 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
     if (isAccepted || localPending || connecting) return;
     setConnecting(true);
     try {
-
       await connectionAPI.send({
         to: mentor._id,
         type: 'mentor-request',
@@ -60,7 +57,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
       });
       setLocalPending(true);
     } catch (err) {
-
+      console.error(err);
     } finally {
       setConnecting(false);
     }
@@ -130,7 +127,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
           </div>
           <div className="p-4 text-center">
             <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">Reply</p>
-            <span className="text-sm font-black text-[#e87315] italic">{mentor.responseTime.replace('< ', '')}</span>
+            <span className="text-sm font-black text-[#e87315] italic">{mentor.responseTime?.replace('< ', '') || '48 hrs'}</span>
           </div>
         </div>
 
@@ -141,7 +138,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
 
         {/* Expertise Specs */}
         <div className="flex flex-wrap gap-2">
-          {mentor.expertise.map((skill, i) => (
+          {mentor.expertise?.map((skill, i) => (
             <span
               key={i}
               className="px-3 py-1.5 bg-white/5 border border-white/10 text-[9px] font-black text-white/40 uppercase tracking-tighter italic group-hover:border-white/30 transition-colors"
@@ -231,6 +228,7 @@ const FindMentors = () => {
   const [error, setError] = useState(null);
   const [connectedMentors, setConnectedMentors] = useState(new Set());
   const [acceptedMentors, setAcceptedMentors] = useState(new Set());
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -240,24 +238,28 @@ const FindMentors = () => {
           connectionAPI.getSent(),
           connectionAPI.getNetwork()
         ]);
-        setMentors(mentorsRes.data);
+        
+        // Safety check to ensure mentorsRes.data is always an array
+        setMentors(Array.isArray(mentorsRes.data) ? mentorsRes.data : []);
 
-        // Build a set of already-connected mentor IDs
+        // Build a set of already-connected mentor IDs with empty array fallbacks
         const alreadySent = new Set(
-          sentRes.data
+          (sentRes.data || [])
             .filter(c => c.type === 'mentor-request' && c.status === 'pending')
-            .map(c => c.to._id)
+            .map(c => c.to?._id)
         );
         const alreadyAccepted = new Set(
-          networkRes.data
+          (networkRes.data || [])
             .filter(u => u.role === 'mentor')
-            .map(u => u._id.toString())
+            .map(u => u._id?.toString())
         );
 
         setAcceptedMentors(alreadyAccepted);
         setConnectedMentors(alreadySent);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load mentors.');
+        // Ensure state remains an array even on API error
+        setMentors([]); 
       } finally {
         setLoading(false);
       }
@@ -266,12 +268,14 @@ const FindMentors = () => {
   }, []);
 
   const filteredMentors = useMemo(() => {
+    if (!Array.isArray(mentors)) return [];
+    
     return mentors.filter(mentor => {
       const matchesSearch =
         searchTerm === '' ||
-        mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mentor.expertise.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        mentor.role.toLowerCase().includes(searchTerm.toLowerCase());
+        mentor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (mentor.expertise || []).some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        mentor.role?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory =
         activeCategory === 'All Mentors' || mentor.category === activeCategory;
@@ -331,7 +335,6 @@ const FindMentors = () => {
         {/* Search Module */}
         <div className="relative w-full md:w-[450px] flex-shrink-0 group">
           {/* Top Label */}
-
 
           <Search
             className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-[#e87315] transition-colors z-10"
@@ -428,14 +431,14 @@ const FindMentors = () => {
       </div>
 
       {/* ── Mentor Grid ── */}
-      {filteredMentors.length > 0 ? (
+      {filteredMentors?.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredMentors.map((mentor) => (
             <MentorCard
               key={mentor._id}
               mentor={mentor}
-              isAccepted={acceptedMentors.has(mentor._id.toString())}
-              isPending={connectedMentors.has(mentor._id.toString())}
+              isAccepted={acceptedMentors.has(mentor._id?.toString())}
+              isPending={connectedMentors.has(mentor._id?.toString())}
             />
           ))}
         </div>
