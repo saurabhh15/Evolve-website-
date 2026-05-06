@@ -41,7 +41,6 @@ module.exports = { io };
 // Expose io to req.app.get('io') for use in other routes
 app.set("io", io);
 
-
 // --- Security & Utility Middleware ---
 app.use(
   helmet({
@@ -208,17 +207,18 @@ io.on("connection", (socket) => {
     io.to(recipientId).emit("user_stop_typing", { userId: socket.userId });
   });
 
+  // Project Rooms
+  socket.on("join_project", (projectId) => {
+    socket.join(`project:${projectId}`);
+  });
+
+  socket.on("leave_project", (projectId) => {
+    socket.leave(`project:${projectId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log(`User disconnected: ${socket.userId}`);
   });
-});
-
-socket.on("join_project", (projectId) => {
-  socket.join(`project:${projectId}`);
-});
-
-socket.on("leave_project", (projectId) => {
-  socket.leave(`project:${projectId}`);
 });
 
 const PORT = process.env.PORT || 5000;
