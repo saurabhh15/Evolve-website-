@@ -3,7 +3,6 @@ import Lenis from 'lenis';
 
 export const ScrollStackItem = ({ children, itemClassName = '', style }) => (
   <div
-    // Updated border-radius to be fully responsive
     className={`scroll-stack-card relative w-full my-6 p-0 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl overflow-hidden box-border origin-top ${itemClassName}`.trim()}
     style={style}
   >
@@ -36,7 +35,6 @@ const ScrollStack = ({
   const tickingRef = useRef(false);
   const isInitializedRef = useRef(false);
 
-  // Caching variables to prevent mobile address bar from ruining the scroll math
   const viewportHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 0);
   const windowWidthRef = useRef(typeof window !== 'undefined' ? window.innerWidth : 0);
 
@@ -89,7 +87,6 @@ const ScrollStack = ({
       void window.scrollY;
     }
 
-    // Freeze the height calculation so mobile address bar hides don't warp the stack position
     viewportHeightRef.current = useWindowScroll ? window.innerHeight : scroller?.clientHeight || 0;
 
     const originalTransforms = [];
@@ -132,7 +129,6 @@ const ScrollStack = ({
     const lastCardTop = cardOffsetsRef.current[lastCardIndex] || 0;
     const lastStackOffset = itemStackDistance * lastCardIndex;
     const lastCardPinStart = lastCardTop - stackPosPx - lastStackOffset;
-    
     const pinEnd = lastCardPinStart + itemDistance;
 
     for (let i = 0; i < cardCount; i++) {
@@ -175,16 +171,9 @@ const ScrollStack = ({
         translateY = pinEnd - cardTop + stackPosPx + stackOffset;
       }
 
-      const newTransform = {
-        translateY: translateY,
-        scale: scale,
-        rotation: rotation,
-        blur: blur
-      };
-
+      const newTransform = { translateY, scale, rotation, blur };
       const lastTransform = lastTransformsRef.current.get(i);
 
-      // FIX: Lowered the translateY threshold from 0.05 to 0.01 for buttery smooth mobile tracking
       const hasChanged =
         !lastTransform ||
         Math.abs(lastTransform.translateY - newTransform.translateY) > 0.01 ||
@@ -235,25 +224,10 @@ const ScrollStack = ({
     requestTick();
   }, [requestTick]);
 
-  const handleWindowScroll = useCallback(() => {
-    // Separate listener specifically for window to ensure it fires smoothly
-    requestTick();
-  }, [requestTick]);
-
   const setupLenis = useCallback(() => {
-    // FIX: If we are using window scroll, DO NOT create a new Lenis instance.
-    // The main app already has a global Lenis instance. Creating a second one causes
-    // them to fight each other and creates the "sackness"/shakiness on mobile.
     if (useWindowScroll) {
-      window.addEventListener('scroll', handleWindowScroll, { passive: true });
-      
-      // Keep an animation frame looping to ensure we catch every micro-movement
-      const raf = () => {
-        requestTick();
-        animationFrameRef.current = requestAnimationFrame(raf);
-      };
-      animationFrameRef.current = requestAnimationFrame(raf);
-      
+      // On mobile, only use scroll event — no RAF loop to avoid shakiness
+      window.addEventListener('scroll', handleScroll, { passive: true });
     } else {
       const scroller = scrollerRef.current;
       if (!scroller) return;
@@ -281,7 +255,7 @@ const ScrollStack = ({
       animationFrameRef.current = requestAnimationFrame(raf);
       lenisRef.current = lenis;
     }
-  }, [handleScroll, handleWindowScroll, requestTick, useWindowScroll]);
+  }, [handleScroll, useWindowScroll]);
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
@@ -355,9 +329,8 @@ const ScrollStack = ({
 
     let resizeTimeout;
     const handleResize = () => {
-      // Fix: Strictly ignore vertical resizes so mobile scroll doesn't glitch the cards!
       if (typeof window !== 'undefined' && window.innerWidth === windowWidthRef.current) {
-        return; 
+        return;
       }
       if (typeof window !== 'undefined') {
         windowWidthRef.current = window.innerWidth;
@@ -379,7 +352,7 @@ const ScrollStack = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       if (useWindowScroll) {
-        window.removeEventListener('scroll', handleWindowScroll);
+        window.removeEventListener('scroll', handleScroll);
       }
       if (resizeTimeout) clearTimeout(resizeTimeout);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
@@ -393,7 +366,7 @@ const ScrollStack = ({
       isUpdatingRef.current = false;
       tickingRef.current = false;
     };
-  }, [itemDistance, useWindowScroll, setupLenis, updateCardTransforms, cacheCardOffsets, handleWindowScroll]);
+  }, [itemDistance, useWindowScroll, setupLenis, updateCardTransforms, cacheCardOffsets, handleScroll]);
 
   const containerClassName = useWindowScroll
     ? `relative w-full ${className}`.trim()
@@ -409,7 +382,7 @@ const ScrollStack = ({
         ...(useWindowScroll ? {} : { scrollBehavior: 'auto' })
       }}
     >
-      <div className="scroll-stack-inner pt-[6vh] md:pt-[10vh] px-3 sm:px-4 md:px-6 pb-16 md:pb-24 max-w-7xl mx-auto">
+      <div className="scroll-stack-inner pt-[6vh] md:pt-[10vh] px-1 sm:px-2 md:px-3 pb-16 md:pb-24 max-w-[1400px] mx-auto">
         {children}
         <div className="scroll-stack-end w-full h-[40vh] md:h-[60vh]" />
       </div>

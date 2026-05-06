@@ -5,7 +5,6 @@ import { Users, Clock, GraduationCap } from 'lucide-react';
 import StatsOverview from '../../components/dashboard/Statsoverview';
 import ProjectsGrid from '../../components/dashboard/ProjectsGrid';
 import SkillsProgress from '../../components/dashboard/SkillsProgress';
-import UpcomingDeadlines from '../../components/dashboard/UpcomingDeadlines';
 import TeamRecruitment from '../../components/dashboard/TeamRecruitment';
 import AlumniFeedback from '../../components/dashboard/AlumniFeedback';
 import ConnectionRequests from '../../components/dashboard/ConnectionRequests';
@@ -67,7 +66,7 @@ const StudentDashboard = () => {
             </p>
           </div>
 
-          {pending.length > 0 && (
+          {/* {pending.length > 0 && (
             <div className="inline-flex items-center gap-3 px-4 py-2.5  bg-white/[0.03] border border-white/[0.05] backdrop-blur-md shadow-lg">
               <div className="relative flex items-center justify-center w-3 h-3">
                 <span className="absolute inline-flex w-full h-full rounded-full bg-[#e87315] opacity-75 animate-ping" />
@@ -77,7 +76,7 @@ const StudentDashboard = () => {
                 You have <span className="text-white">{pending.length} pending</span> connection {pending.length === 1 ? 'request' : 'requests'}
               </span>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Right Graphic: Interactive Hover Tilt with Glow */}

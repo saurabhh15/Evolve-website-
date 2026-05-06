@@ -1,6 +1,7 @@
 const Comment = require('../models/Comment');
 const Project = require('../models/Project');
 const Notification = require('../models/Notification');
+const { io } = require('../server');
 
 /**
  * @desc    Get all comments for a project
@@ -25,7 +26,7 @@ exports.getComments = async (req, res, next) => {
  * @route   POST /api/projects/:id/comments
  * @access  Private
  */
-exports.addComment = async (req, res, next) => {
+exports.addComment = async (req, res) => {
   try {
     const { content } = req.body;
 
@@ -46,6 +47,13 @@ exports.addComment = async (req, res, next) => {
 
     await comment.save();
     await comment.populate('author', 'name role profileImage college');
+    await comment.populate('project', 'title');
+
+    io.to(`project:${req.params.id}`).emit('comment_received', comment);
+
+    if (project.creator.toString() !== req.user.userId) {
+      io.to(project.creator.toString()).emit('comment_received', comment);
+    }
 
     // Create notification for project owner (if commenter is not the owner)
     if (project.creator.toString() !== req.user.userId) {
@@ -58,11 +66,17 @@ exports.addComment = async (req, res, next) => {
         message: `commented on your project "${project.title}"`
       });
       await notification.save();
+      await notification.populate('sender', 'name role profileImage');
+      await notification.populate('project', 'title');
+
+      // Emit real-time notification to project owner
+      io.to(project.creator.toString()).emit('notification_received', notification);
     }
 
     res.status(201).json(comment);
   } catch (error) {
-    next(error);
+    console.error('Add comment error:', error);
+    res.status(500).json({ message: 'Error adding comment' });
   }
 };
 

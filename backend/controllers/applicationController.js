@@ -1,10 +1,10 @@
 const Application = require('../models/Application');
 const Project = require('../models/Project');
 const Notification = require('../models/Notification');
-
+const { io } = require('../server');
 
 // POST /api/projects/:id/apply
-exports.apply = async (req, res, next) => {
+exports.apply = async (req, res) => {
     try {
         const { role, message } = req.body;
         const projectId = req.params.id;
@@ -28,7 +28,8 @@ exports.apply = async (req, res, next) => {
         const existing = await Application.findOne({
             project: projectId,
             applicant: req.user.userId,
-            role
+            role,
+            status: { $in: ['pending', 'accepted'] }
         });
 
         if (existing) {
@@ -37,6 +38,13 @@ exports.apply = async (req, res, next) => {
                 status: existing.status
             });
         }
+
+        await Application.deleteOne({
+            project: projectId,
+            applicant: req.user.userId,
+            role,
+            status: 'rejected'
+        });
 
         const application = new Application({
             project: projectId,
@@ -47,20 +55,23 @@ exports.apply = async (req, res, next) => {
 
         await application.save();
 
-        await Notification.create({
+        const notif = await Notification.create({
             recipient: project.creator,
             sender: req.user.userId,
             type: 'new_application',
             project: projectId,
-            message: `Someone applied for the "${role}" role on your project "${project.title}"`
+            message: `Someone applied for the "${role}" role on your project "${project.title}"`,
+            role: role
         });
+        io.to(project.creator.toString()).emit('notification_received', notif);
         await application.populate('applicant', 'name role profileImage college');
         await application.populate('project', 'title');
 
         res.status(201).json(application);
 
-    } catch (error) {
-        next(error);
+    } catch (err) {
+        console.error('Apply error:', err);
+        res.status(500).json({ message: 'Error submitting application' });
     }
 };
 
@@ -103,7 +114,7 @@ exports.getMyApplications = async (req, res, next) => {
 };
 
 // PUT /api/applications/:id
-exports.updateStatus = async (req, res, next) => {
+exports.updateStatus = async (req, res) => {
     try {
         const { status } = req.body;
 
@@ -143,8 +154,8 @@ exports.updateStatus = async (req, res, next) => {
 
         await application.save();
 
-        // Create notification for applicant
-        await Notification.create({
+        // ── Create notification for applicant ──
+        const notif = await Notification.create({
             recipient: application.applicant._id,
             sender: req.user.userId,
             type: status === 'accepted' ? 'application_accepted' : 'application_rejected',
@@ -153,10 +164,32 @@ exports.updateStatus = async (req, res, next) => {
                 ? `Your application for "${application.role}" on "${application.project.title}" was accepted!`
                 : `Your application for "${application.role}" on "${application.project.title}" was not accepted this time.`
         });
+        io.to(application.applicant._id.toString()).emit('notification_received', notif);
+
+        if (status === 'rejected') {
+            io.to(application.applicant._id.toString()).emit('application_rejected', {
+                projectId: application.project._id,
+                role: application.role
+            });
+        }
+
+        if (status === 'accepted') {
+            io.to(`project:${application.project._id.toString()}`).emit('team_updated', {
+                projectId: application.project._id,
+                teamSize: project.teamSize,
+                newMember: {
+                    _id: application.applicant._id,
+                    name: application.applicant.name,
+                    role: application.applicant.role,
+                    profileImage: application.applicant.profileImage
+                }
+            });
+        }
 
         res.json(application);
 
-    } catch (error) {
-        next(error);
+    } catch (err) {
+        console.error('Update application error:', err);
+        res.status(500).json({ message: 'Error updating application' });
     }
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { messageAPI, connectionAPI } from '../../services/api';
-import { initSocket, getSocket } from '../../services/socket';
+import { getSocket } from '../../services/socket';
 import { Send, MessageCircle, ArrowLeft, X, Search } from 'lucide-react';
 
 const Messages = () => {
@@ -56,7 +56,7 @@ const Messages = () => {
         try {
             const response = await messageAPI.getConversation(conv.user._id);
             setMessages(response.data);
-           
+
             setTimeout(() => {
                 const container = messagesContainerRef.current;
                 if (!container) return;
@@ -157,22 +157,17 @@ const Messages = () => {
         // Dispatch event to clear unread messages in navbar
         window.dispatchEvent(new CustomEvent('clearUnreadMessages'));
     }, []);
-    // ── Initialize Socket ──
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const socket = initSocket(token);
 
-        // Receive new message
-        socket.on('message_received', (message) => {
-            // If conversation is open with this sender, add message
+
+    useEffect(() => {
+        const onMessageReceived = (e) => {
+            const message = e.detail;
             setSelectedConv(prev => {
                 if (prev?.user._id === message.sender._id) {
                     setMessages(msgs => [...msgs, message]);
                 }
                 return prev;
             });
-
-            // Update conversations list
             setConversations(prev => {
                 const exists = prev.find(c => c.user._id === message.sender._id);
                 if (exists) {
@@ -182,45 +177,42 @@ const Messages = () => {
                             : c
                     );
                 }
-                // New conversation
-                return [{
-                    user: message.sender,
-                    lastMessage: message,
-                    unreadCount: 1
-                }, ...prev];
+                return [{ user: message.sender, lastMessage: message, unreadCount: 1 }, ...prev];
             });
-        });
+        };
 
-        // Message sent confirmation
-        socket.on('message_sent', (message) => {
+        const onMessageSent = (e) => {
+            const message = e.detail;
             setMessages(prev => {
-                // Avoid duplicates
-                const exists = prev.find(m => m._id === message._id);
-                if (exists) return prev;
+                if (prev.find(m => m._id === message._id)) return prev;
                 return [...prev, message];
             });
-        });
+        };
 
-        // Typing indicators
-        socket.on('user_typing', ({ userId }) => {
+        const onTyping = (e) => {
             setSelectedConv(prev => {
-                if (prev?.user._id === userId) setIsTyping(true);
+                if (prev?.user._id === e.detail.userId) setIsTyping(true);
                 return prev;
             });
-        });
+        };
 
-        socket.on('user_stop_typing', ({ userId }) => {
+        const onStopTyping = (e) => {
             setSelectedConv(prev => {
-                if (prev?.user._id === userId) setIsTyping(false);
+                if (prev?.user._id === e.detail.userId) setIsTyping(false);
                 return prev;
             });
-        });
+        };
+
+        window.addEventListener('message_received', onMessageReceived);
+        window.addEventListener('message_sent', onMessageSent);
+        window.addEventListener('user_typing', onTyping);
+        window.addEventListener('user_stop_typing', onStopTyping);
 
         return () => {
-            socket.off('message_received');
-            socket.off('message_sent');
-            socket.off('user_typing');
-            socket.off('user_stop_typing');
+            window.removeEventListener('message_received', onMessageReceived);
+            window.removeEventListener('message_sent', onMessageSent);
+            window.removeEventListener('user_typing', onTyping);
+            window.removeEventListener('user_stop_typing', onStopTyping);
         };
     }, []);
 

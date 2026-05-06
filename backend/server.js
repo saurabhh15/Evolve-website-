@@ -1,68 +1,71 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
-const passport = require('./config/passport');
-const http = require('http');
-const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken');
-const Message = require('./models/Message');
-const path = require('path');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const compression = require("compression");
+const rateLimit = require("express-rate-limit");
+const passport = require("./config/passport");
+const http = require("http");
+const { Server } = require("socket.io");
+const jwt = require("jsonwebtoken");
+const Message = require("./models/Message");
+const path = require("path");
 
 // --- Environment Variable Checks ---
 if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
-  console.error('Missing MONGO_URI or JWT_SECRET in .env');
+  console.error("Missing MONGO_URI or JWT_SECRET in .env");
   process.exit(1);
 }
 
 const app = express();
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 const server = http.createServer(app);
 
 // --- CORS Configuration ---
 const corsOptions = {
   origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:3000',
-    'https://evolve-website-wheat.vercel.app' 
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "https://evolve-website-wheat.vercel.app",
   ],
-  credentials: true
+  credentials: true,
 };
 
 const io = new Server(server, {
-  cors: corsOptions
+  cors: corsOptions,
 });
-
+module.exports = { io };
 // Expose io to req.app.get('io') for use in other routes
-app.set('io', io);
+app.set("io", io);
+
 
 // --- Security & Utility Middleware ---
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 // Serve static files from the 'public' directory (for default images)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(cors(corsOptions));
 app.use(compression());
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: "10kb" }));
 app.use(passport.initialize());
 
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
 }
 
 // --- Rate Limiting ---
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { message: 'Too many requests, please try again later.' },
+  message: { message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -70,14 +73,14 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: { message: 'Too many login attempts, please try again later.' },
+  message: { message: "Too many login attempts, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 // --- Input Sanitization ---
 const sanitizeObject = (obj) => {
-  if (!obj || typeof obj !== 'object') return;
+  if (!obj || typeof obj !== "object") return;
   for (const key of Object.keys(obj)) {
     if (/[$.]/.test(key)) {
       delete obj[key];
@@ -89,10 +92,10 @@ const sanitizeObject = (obj) => {
 
 app.use((req, res, next) => {
   try {
-    if (req.body && typeof req.body === 'object') {
+    if (req.body && typeof req.body === "object") {
       sanitizeObject(req.body);
     }
-    if (req.params && typeof req.params === 'object') {
+    if (req.params && typeof req.params === "object") {
       sanitizeObject(req.params);
     }
   } catch (err) {
@@ -102,46 +105,47 @@ app.use((req, res, next) => {
 });
 
 // --- DB connection ---
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
   .catch((err) => {
-    console.error('DB Error:', err.message);
+    console.error("DB Error:", err.message);
     process.exit(1);
   });
 
 // --- Base & Health Check Routes ---
-app.get('/', (req, res) => {
-  res.json({ message: 'Evolve API running', version: '1.0.0' });
+app.get("/", (req, res) => {
+  res.json({ message: "Evolve API running", version: "1.0.0" });
 });
 
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
-    status: 'ok',
-    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    status: "ok",
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     uptime: process.uptime(),
   });
 });
 
 // Cold Start Fix endpoint for cron-job.org / UptimeRobot
-app.get('/api/health', (req, res) => {
-  res.status(200).send('Server is awake');
+app.get("/api/health", (req, res) => {
+  res.status(200).send("Server is awake");
 });
 
 // --- Routes ---
-app.use('/api/', apiLimiter);
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+app.use("/api/", apiLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/projects', require('./routes/projects'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/connections', require('./routes/connections'));
-app.use('/api/projects/:id/comments', require('./routes/comments'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/learning-goals', require('./routes/learningGoals'));
-app.use('/api/notes', require('./routes/notes'));
-app.use('/api/applications', require('./routes/applications'));
+app.use("/api/auth", require("./routes/auth"));
+app.use("/api/users", require("./routes/users"));
+app.use("/api/projects", require("./routes/projects"));
+app.use("/api/messages", require("./routes/messages"));
+app.use("/api/connections", require("./routes/connections"));
+app.use("/api/projects/:id/comments", require("./routes/comments"));
+app.use("/api/notifications", require("./routes/notifications"));
+app.use("/api/learning-goals", require("./routes/learningGoals"));
+app.use("/api/notes", require("./routes/notes"));
+app.use("/api/applications", require("./routes/applications"));
 
 // Catch-all 404 handler modified to pass to global error handler
 app.use((req, res, next) => {
@@ -151,63 +155,70 @@ app.use((req, res, next) => {
 });
 
 // Global error handler
-app.use(require('./middleware/errorHandler'));
+app.use(require("./middleware/errorHandler"));
 
 // --- Socket.io Auth Middleware ---
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
-  if (!token) return next(new Error('No token'));
+  if (!token) return next(new Error("No token"));
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.userId;
     next();
   } catch (err) {
-    next(new Error('Invalid token'));
+    next(new Error("Invalid token"));
   }
 });
 
 // --- Socket.io Events ---
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`User connected: ${socket.userId}`);
 
   // Join personal room
   socket.join(socket.userId);
 
   // Send message
-  socket.on('send_message', async ({ recipientId, content }) => {
+  socket.on("send_message", async ({ recipientId, content }) => {
     try {
       const message = new Message({
         sender: socket.userId,
         recipient: recipientId,
-        content: content.trim()
+        content: content.trim(),
       });
       await message.save();
-      await message.populate('sender recipient', 'name profileImage');
+      await message.populate("sender recipient", "name profileImage");
 
       // Emit to recipient
-      io.to(recipientId).emit('message_received', message);
+      io.to(recipientId).emit("message_received", message);
 
       // Emit back to sender (so other tabs/devices get it too)
-      socket.emit('message_sent', message);
-
+      socket.emit("message_sent", message);
     } catch (err) {
-      console.error('Socket send error:', err);
-      socket.emit('message_error', { message: 'Failed to send message' });
+      console.error("Socket send error:", err);
+      socket.emit("message_error", { message: "Failed to send message" });
     }
   });
 
   // Typing indicators
-  socket.on('typing', ({ recipientId }) => {
-    io.to(recipientId).emit('user_typing', { userId: socket.userId });
+  socket.on("typing", ({ recipientId }) => {
+    io.to(recipientId).emit("user_typing", { userId: socket.userId });
   });
 
-  socket.on('stop_typing', ({ recipientId }) => {
-    io.to(recipientId).emit('user_stop_typing', { userId: socket.userId });
+  socket.on("stop_typing", ({ recipientId }) => {
+    io.to(recipientId).emit("user_stop_typing", { userId: socket.userId });
   });
 
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     console.log(`User disconnected: ${socket.userId}`);
   });
+});
+
+socket.on("join_project", (projectId) => {
+  socket.join(`project:${projectId}`);
+});
+
+socket.on("leave_project", (projectId) => {
+  socket.leave(`project:${projectId}`);
 });
 
 const PORT = process.env.PORT || 5000;

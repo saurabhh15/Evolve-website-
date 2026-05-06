@@ -4,19 +4,24 @@ const FAQItem = ({ faq, index, isActive, onToggle, isVisible }) => {
     const answerRef = useRef(null);
     const [height, setHeight] = useState(0);
 
-    // Recalculate height not just on load, but whenever the window/container resizes
-    // This prevents text from getting cut off if the user rotates their phone
     useEffect(() => {
-        if (!answerRef.current) return;
-        
+        const el = answerRef.current;
+        if (!el) return;
+
         const updateHeight = () => {
-            setHeight(answerRef.current.scrollHeight);
+            if (answerRef.current) {
+                setHeight(answerRef.current.scrollHeight);
+            }
         };
 
         updateHeight();
 
-        const resizeObserver = new ResizeObserver(() => updateHeight());
-        resizeObserver.observe(answerRef.current);
+        const resizeObserver = new ResizeObserver(() => {
+            if (answerRef.current) {
+                setHeight(answerRef.current.scrollHeight);
+            }
+        });
+        resizeObserver.observe(el);
 
         return () => resizeObserver.disconnect();
     }, [faq.answer, isActive]);
@@ -32,7 +37,6 @@ const FAQItem = ({ faq, index, isActive, onToggle, isVisible }) => {
             >
                 {/* Question */}
                 <div className="flex items-center justify-between p-4 sm:p-6 md:p-7 bg-white relative z-20">
-                    {/* Added pr-4 to prevent text from bumping into the arrow on tiny screens */}
                     <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 pr-2 sm:pr-4">
                         <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 leading-snug">
                             {faq.question}
@@ -53,7 +57,7 @@ const FAQItem = ({ faq, index, isActive, onToggle, isVisible }) => {
                     </div>
                 </div>
 
-                {/* Answer — Exact height tracking ensures smooth resize handling */}
+                {/* Answer */}
                 <div style={{
                     height: isActive ? `${height}px` : '0px',
                     opacity: isActive ? 1 : 0,
@@ -92,7 +96,8 @@ const FAQSection = () => {
     ];
 
     useEffect(() => {
-        const observers = observerRefs.current.map((ref, index) => {
+        const currentRefs = observerRefs.current;
+        const observers = currentRefs.map((ref, index) => {
             const observer = new IntersectionObserver(
                 (entries) => {
                     entries.forEach((entry) => {
@@ -117,15 +122,15 @@ const FAQSection = () => {
 
     return (
         <div className="relative bg-[#fffaf5] py-12 sm:py-16 md:py-20 px-4 sm:px-6 overflow-hidden">
-            
-            {/* Decorative ? — Now visible on mobile */}
+
+            {/* Decorative ? */}
             <div className="absolute top-[2%] md:top-[1%] -right-10 sm:-right-20 lg:-right-40 pointer-events-none z-0 select-none -rotate-[35deg]">
                 <svg viewBox="0 0 100 120" className="w-[250px] sm:w-[400px] lg:w-[700px] h-auto opacity-60 md:opacity-100">
                     <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="none" stroke="#fde68a" strokeWidth="0.5"
                         style={{ fontSize: '120px', fontFamily: 'Helvetica', fontWeight: '900' }}>?</text>
                 </svg>
             </div>
-            
+
             <div className="absolute top-[60%] md:top-[45%] -left-16 sm:-left-20 pointer-events-none z-0 select-none rotate-[25deg]">
                 <svg viewBox="0 0 100 120" className="w-[250px] sm:w-[400px] lg:w-[700px] h-auto opacity-30 md:opacity-100">
                     <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="none" stroke="#F4442E" strokeWidth="0.5"
@@ -135,13 +140,19 @@ const FAQSection = () => {
 
             <div className="relative z-20 max-w-3xl mx-auto">
                 {/* Header */}
-                <div className="text-center mb-10 sm:mb-12 md:mb-16 animate-fade-in-up">
+                <div className="text-center mb-10 sm:mb-12 md:mb-16" style={{ animation: 'fadeInUp 0.8s ease-out forwards' }}>
                     <div className="inline-block mb-3 sm:mb-4">
                         <span className="bg-gradient-to-r from-[#F4442E] to-[#E8563D] text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-semibold tracking-wide">
                             FAQ
                         </span>
                     </div>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 leading-tight px-2">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 tracking-tight leading-tight px-2"
+                        style={{
+                            backgroundImage: 'linear-gradient(to right, #111827, #4B5563)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                        }}>
                         Frequently Asked Questions
                     </h1>
                     <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-xl mx-auto px-2">
@@ -165,13 +176,10 @@ const FAQSection = () => {
                 </div>
             </div>
 
-            <style jsx>{`
-                @keyframes fade-in-up {
+            <style>{`
+                @keyframes fadeInUp {
                     from { opacity: 0; transform: translateY(30px); }
                     to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in-up {
-                    animation: fade-in-up 0.8s ease-out forwards;
                 }
             `}</style>
         </div>

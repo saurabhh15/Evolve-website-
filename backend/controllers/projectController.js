@@ -1,4 +1,6 @@
 const Project = require('../models/Project');
+const { io } = require('../server');
+const Notification = require('../models/Notification');
 
 /**
  * @desc    Create new project
@@ -198,7 +200,7 @@ exports.deleteProject = async (req, res, next) => {
  * @route   POST /api/projects/:id/like
  * @access  Private
  */
-exports.toggleLike = async (req, res, next) => {
+exports.toggleLike = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -223,13 +225,34 @@ exports.toggleLike = async (req, res, next) => {
 
     await project.save();
 
+    // Only notify and emit when liking, not unliking
+    if (isLiked && project.creator.toString() !== userId) {
+      const notif = await Notification.create({
+        recipient: project.creator,
+        sender: userId,
+        type: 'project_like',
+        project: project._id,
+        message: `Someone liked your project "${project.title}"`
+      });
+
+      // Emit to project creator's personal room
+      io.to(project.creator.toString()).emit('notification_received', notif);
+
+      // Emit like update to project owner for stats
+      io.to(project.creator.toString()).emit('project_liked', {
+        projectId: project._id,
+        likes: project.likes.length
+      });
+    }
+
     res.json({
       likes: project.likes.length,
       isLiked,
       message: isLiked ? 'Project liked' : 'Project unliked'
     });
   } catch (error) {
-    next(error);
+    console.error('Toggle like error:', error);
+    res.status(500).json({ message: 'Error toggling like' });
   }
 };
 

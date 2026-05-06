@@ -1,11 +1,12 @@
 const Connection = require('../models/Connection');
+const { io } = require('../server');
 
 /**
  * @desc    Send connection request
  * @route   POST /api/connections
  * @access  Private
  */
-exports.sendConnectionRequest = async (req, res, next) => {
+exports.sendConnectionRequest = async (req, res) => {
   try {
     const { to, type, projectId, message } = req.body;
 
@@ -57,6 +58,14 @@ exports.sendConnectionRequest = async (req, res, next) => {
 
     // Populate user details before sending response
     await connection.populate('from to', 'name role profileImage');
+
+    io.to(to.toString()).emit('connection_request_received', {
+      _id: connection._id,
+      from: connection.from,
+      type: connection.type,
+      createdAt: connection.createdAt
+    });
+
     if (projectId) {
       await connection.populate('projectId', 'title');
     }
@@ -64,7 +73,11 @@ exports.sendConnectionRequest = async (req, res, next) => {
     res.status(201).json(connection);
 
   } catch (error) {
-    next(error);
+    console.error('Send connection error:', error);
+    res.status(500).json({
+      message: 'Error sending connection request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -156,7 +169,7 @@ exports.getSentRequests = async (req, res, next) => {
  * @route   PUT /api/connections/:id
  * @access  Private (Only receiver can update)
  */
-exports.updateConnectionStatus = async (req, res, next) => {
+exports.updateConnectionStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -190,13 +203,22 @@ exports.updateConnectionStatus = async (req, res, next) => {
     connection.status = status;
     await connection.save();
 
+    if (status === 'accepted') {
+      io.to(connection.from.toString()).emit('notification_received', {
+        type: 'connection_accepted',
+        message: 'Your connection request was accepted',
+        createdAt: new Date()
+      });
+    }
+
     // Populate before sending response
     await connection.populate('from to', 'name role profileImage');
 
     res.json(connection);
 
   } catch (error) {
-    next(error);
+    console.error('Update connection error:', error);
+    res.status(500).json({ message: 'Error updating connection status' });
   }
 };
 

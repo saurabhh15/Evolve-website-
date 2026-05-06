@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { projectAPI, connectionAPI, commentAPI, applicationAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { getSocket } from '../../services/socket';
 import { Heart, Eye, Users, ArrowLeft, ExternalLink, Send, Pencil, Trash2 } from 'lucide-react';
 
 
@@ -27,10 +28,12 @@ const ProjectDetail = () => {
     const [commentSubmitting, setCommentSubmitting] = useState(false);
     const [editingComment, setEditingComment] = useState(null);
     const [editCommentInput, setEditCommentInput] = useState('');
+    const [showMentorModal, setShowMentorModal] = useState(false);
     const [isAccepted, setIsAccepted] = useState(false);
-    const [appliedRoles, setAppliedRoles] = useState(new Set());  
+    const [appliedRoles, setAppliedRoles] = useState(new Set());  //project applications
     const [applications, setApplications] = useState([]);
     const [applicationsLoading, setApplicationsLoading] = useState(false);
+    const [showAboutModal, setShowAboutModal] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,7 +61,10 @@ const ProjectDetail = () => {
                 );
                 const appliedToThisProject = new Set(
                     myApplicationsRes.data
-                        .filter(a => a.project._id === id || a.project === id)
+                        .filter(a =>
+                            (a.project._id === id || a.project === id) &&
+                            a.status !== 'rejected' // ← add this
+                        )
                         .map(a => a.role)
                 );
 
@@ -117,7 +123,86 @@ const ProjectDetail = () => {
         load();
     }, [activeSection]);
 
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket || !id) return;
 
+        socket.emit('join_project', id);
+
+        return () => {
+            socket.emit('leave_project', id);
+        };
+    }, [id]);
+
+
+    useEffect(() => {
+        const handler = (e) => {
+            const comment = e.detail;
+
+            if (comment.author?._id === user?._id) return;
+            setComments(prev => {
+                if (prev.find(c => c._id === comment._id)) return prev;
+                return [comment, ...prev];
+            });
+        };
+        window.addEventListener('comment_received', handler);
+        return () => window.removeEventListener('comment_received', handler);
+    }, [user?._id]);
+
+    useEffect(() => {
+        if (showMentorModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [showMentorModal]);
+
+    useEffect(() => {
+        const handler = (e) => {
+            const { projectId, role } = e.detail;
+            // Only update if this is the current project
+            if (projectId?.toString() !== id) return;
+            // Remove the rejected role from appliedRoles
+            setAppliedRoles(prev => {
+                const updated = new Set(prev);
+                updated.delete(role);
+                return updated;
+            });
+        };
+
+        window.addEventListener('application_rejected', handler);
+        return () => window.removeEventListener('application_rejected', handler);
+    }, [id]);
+
+
+    useEffect(() => {
+        const handler = (e) => {
+            const { projectId, teamSize, newMember } = e.detail;
+            if (projectId?.toString() !== id) return;
+
+            setProject(prev => ({
+                ...prev,
+                teamSize,
+                teamMembers: [...(prev.teamMembers || []), newMember]
+            }));
+        };
+
+        window.addEventListener('team_updated', handler);
+        return () => window.removeEventListener('team_updated', handler);
+    }, [id]);
+
+
+    useEffect(() => {
+        if (showAboutModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [showAboutModal]);
 
     const handleApplicationStatus = async (applicationId, status) => {
         try {
@@ -435,13 +520,20 @@ const ProjectDetail = () => {
                                             01 About Project
                                         </h3>
                                     </div>
-                                    <p className="text-4xl lg:text-5xl font-black italic tracking-tighter leading-[1.05] uppercase text-white/90 relative z-10">
+
+                                    <p className="text-4xl lg:text-5xl font-black italic tracking-tighter leading-[1.05] uppercase text-white/90 relative z-10 line-clamp-3">
                                         "{project.description || 'Null_Description_Data'}"
                                     </p>
-                                    {/* Ghost background decal */}
-                                    <span className="absolute -bottom-6 right-0 text-[100px] font-black text-white/[0.02] italic select-none pointer-events-none">
-                                        INFO
-                                    </span>
+
+                                    {project.description?.length > 200 && (
+                                        <button
+                                            onClick={() => setShowAboutModal(true)}
+                                            className="mt-6 flex items-center gap-2 text-[10px] font-black text-[#e87315] uppercase tracking-widest hover:gap-4 transition-all"
+                                        >
+                                            Read Full Description
+                                            <div className="h-[1px] w-6 bg-[#e87315]" />
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Looking For Module */}
@@ -587,93 +679,98 @@ const ProjectDetail = () => {
                                         <div key={i} className="h-24 bg-white/[0.02] border border-white/5 animate-pulse" />
                                     ))
                                 ) : applications.length > 0 ? (
-                                    applications.map(app => (
-                                        <div
-                                            key={app._id}
-                                            className="relative bg-[#080808] border border-white/[0.03] p-6 group overflow-hidden"
-                                        >
-                                            {/* Status indicator */}
-                                            <div className={`absolute top-0 left-0 w-[2px] h-full ${app.status === 'accepted' ? 'bg-green-500' :
-                                                app.status === 'rejected' ? 'bg-red-500' :
-                                                    'bg-[#e87315]'
-                                                }`} />
+                                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar"
+                                        onWheel={(e) => e.stopPropagation()}
+                                    >
 
-                                            <div className="flex items-start gap-5 pl-4">
-                                                {/* Avatar */}
-                                                <img
-                                                    src={app.applicant?.profileImage}
-                                                    onError={e => {
-                                                        e.target.src = `https://ui-avatars.com/api/?background=080808&color=e87315&size=100&name=${app.applicant?.name}&bold=true`;
-                                                    }}
-                                                    onClick={() => navigate(`/dashboard/user/${app.applicant?._id}`)}
-                                                    className="w-12 h-12 object-cover border border-white/10 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-                                                    alt={app.applicant?.name}
-                                                />
+                                        {applications.map(app => (
+                                            <div
+                                                key={app._id}
+                                                className="relative bg-[#080808] border border-white/[0.03] p-6 group overflow-hidden"
+                                            >
+                                                {/* Status indicator */}
+                                                <div className={`absolute top-0 left-0 w-[2px] h-full ${app.status === 'accepted' ? 'bg-green-500' :
+                                                    app.status === 'rejected' ? 'bg-red-500' :
+                                                        'bg-[#e87315]'
+                                                    }`} />
 
-                                                {/* Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between gap-4 mb-1">
-                                                        <p
-                                                            onClick={() => navigate(`/dashboard/user/${app.applicant?._id}`)}
-                                                            className="text-sm font-black text-white hover:text-[#e87315] transition-colors cursor-pointer uppercase tracking-tight"
-                                                        >
-                                                            {app.applicant?.name}
-                                                        </p>
-                                                        <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest shrink-0">
-                                                            {new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                        </span>
-                                                    </div>
+                                                <div className="flex items-start gap-5 pl-4">
+                                                    {/* Avatar */}
+                                                    <img
+                                                        src={app.applicant?.profileImage}
+                                                        onError={e => {
+                                                            e.target.src = `https://ui-avatars.com/api/?background=080808&color=e87315&size=100&name=${app.applicant?.name}&bold=true`;
+                                                        }}
+                                                        onClick={() => navigate(`/dashboard/user/${app.applicant?._id}`)}
+                                                        className="w-12 h-12 object-cover border border-white/10 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                                        alt={app.applicant?.name}
+                                                    />
 
-                                                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">
-                                                        {app.applicant?.college || app.applicant?.role}
-                                                    </p>
-
-                                                    {/* Role applied for */}
-                                                    <div className="inline-flex items-center gap-2 mb-3">
-                                                        <span className="text-[9px] font-black text-[#e87315] uppercase tracking-widest">
-                                                            Applied for:
-                                                        </span>
-                                                        <span className="px-2 py-0.5 bg-[#e87315]/10 border border-[#e87315]/20 text-[9px] font-black text-[#e87315] uppercase tracking-widest">
-                                                            {app.role}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Message */}
-                                                    {app.message && (
-                                                        <p className="text-xs text-white/40 italic leading-relaxed mb-4">
-                                                            "{app.message}"
-                                                        </p>
-                                                    )}
-
-                                                    {/* Actions or Status */}
-                                                    {app.status === 'pending' ? (
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => handleApplicationStatus(app._id, 'accepted')}
-                                                                className="flex items-center gap-1.5 px-4 py-2 bg-[#e87315] hover:bg-[#f97316] text-black text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                                    {/* Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-start justify-between gap-4 mb-1">
+                                                            <p
+                                                                onClick={() => navigate(`/dashboard/user/${app.applicant?._id}`)}
+                                                                className="text-sm font-black text-white hover:text-[#e87315] transition-colors cursor-pointer uppercase tracking-tight"
                                                             >
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleApplicationStatus(app._id, 'rejected')}
-                                                                className="flex items-center gap-1.5 px-4 py-2 bg-transparent hover:bg-red-500/10 text-white/30 hover:text-red-400 text-[9px] font-black uppercase tracking-widest border border-white/5 hover:border-red-500/25 transition-all active:scale-95"
-                                                            >
-                                                                Reject
-                                                            </button>
+                                                                {app.applicant?.name}
+                                                            </p>
+                                                            <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest shrink-0">
+                                                                {new Date(app.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                            </span>
                                                         </div>
-                                                    ) : (
-                                                        <span className={`text-[9px] font-black uppercase tracking-widest ${app.status === 'accepted' ? 'text-green-400' : 'text-red-400'
-                                                            }`}>
-                                                            ✓ {app.status}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            {/* Corner ticks */}
-                                            <div className="absolute top-0 right-0 w-1 h-1 bg-white/5 group-hover:bg-[#e87315] transition-colors" />
-                                        </div>
-                                    ))
+                                                        <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">
+                                                            {app.applicant?.college || app.applicant?.role}
+                                                        </p>
+
+                                                        {/* Role applied for */}
+                                                        <div className="inline-flex items-center gap-2 mb-3">
+                                                            <span className="text-[9px] font-black text-[#e87315] uppercase tracking-widest">
+                                                                Applied for:
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-[#e87315]/10 border border-[#e87315]/20 text-[9px] font-black text-[#e87315] uppercase tracking-widest">
+                                                                {app.role}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Message */}
+                                                        {app.message && (
+                                                            <p className="text-xs text-white/40 italic leading-relaxed mb-4">
+                                                                "{app.message}"
+                                                            </p>
+                                                        )}
+
+                                                        {/* Actions or Status */}
+                                                        {app.status === 'pending' ? (
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => handleApplicationStatus(app._id, 'accepted')}
+                                                                    className="flex items-center gap-1.5 px-4 py-2 bg-[#e87315] hover:bg-[#f97316] text-black text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                                                >
+                                                                    Accept
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleApplicationStatus(app._id, 'rejected')}
+                                                                    className="flex items-center gap-1.5 px-4 py-2 bg-transparent hover:bg-red-500/10 text-white/30 hover:text-red-400 text-[9px] font-black uppercase tracking-widest border border-white/5 hover:border-red-500/25 transition-all active:scale-95"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span className={`text-[9px] font-black uppercase tracking-widest ${app.status === 'accepted' ? 'text-green-400' : 'text-red-400'
+                                                                }`}>
+                                                                ✓ {app.status}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Corner ticks */}
+                                                <div className="absolute top-0 right-0 w-1 h-1 bg-white/5 group-hover:bg-[#e87315] transition-colors" />
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : (
                                     <div className="relative text-center py-20 border border-dashed border-white/[0.03]">
                                         <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.5em] italic">
@@ -775,7 +872,7 @@ const ProjectDetail = () => {
                                         >
                                             Send Message
                                         </button>
-                                        {project.lookingFor?.length > 0 && (
+                                        {applicableRoles?.length > 0 && (
                                             appliedRoles.size > 0 ? (
                                                 <button
                                                     disabled
@@ -966,13 +1063,10 @@ const ProjectDetail = () => {
                             {/* Show all mentors link if more than 3 */}
                             {comments.filter(c => c.author?.role === 'mentor').length > 3 && (
                                 <button
-                                    onClick={() => {
-                                        const mentorSection = document.getElementById('all-comments');
-                                        mentorSection?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
+                                    onClick={() => setShowMentorModal(true)}
                                     className="mt-4 w-full py-2.5 bg-purple-500/5 hover:bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs font-black text-purple-400 uppercase tracking-widest transition-all"
                                 >
-                                    View All Mentor Feedback ↓
+                                    View All {comments.filter(c => c.author?.role === 'mentor').length} Mentor Feedbacks ↗
                                 </button>
                             )}
                         </div>
@@ -1266,8 +1360,8 @@ const ProjectDetail = () => {
                                                 key={role}
                                                 onClick={() => setSelectedRole(role)}
                                                 className={`group relative w-full px-5 py-4 border transition-all duration-300 text-left overflow-hidden ${selectedRole === role
-                                                        ? 'border-[#e87315] bg-[#e87315]/5'
-                                                        : 'border-white/5 bg-white/[0.02] hover:border-white/20'
+                                                    ? 'border-[#e87315] bg-[#e87315]/5'
+                                                    : 'border-white/5 bg-white/[0.02] hover:border-white/20'
                                                     }`}
                                             >
                                                 <div className="relative z-10 flex items-center justify-between">
@@ -1288,8 +1382,8 @@ const ProjectDetail = () => {
                                         <button
                                             onClick={() => setSelectedRole('')}
                                             className={`group relative w-full px-5 py-4 border transition-all duration-300 text-left ${selectedRole === ''
-                                                    ? 'border-[#e87315] bg-[#e87315]/5'
-                                                    : 'border-white/5 bg-white/[0.02] hover:border-white/20'
+                                                ? 'border-[#e87315] bg-[#e87315]/5'
+                                                : 'border-white/5 bg-white/[0.02] hover:border-white/20'
                                                 }`}
                                         >
                                             <div className="relative z-10 flex items-center justify-between">
@@ -1322,16 +1416,17 @@ const ProjectDetail = () => {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    onClick={handleConnect}
-                                    disabled={connecting}
-                                    className="order-1 sm:order-2 flex-[1.5] py-4 bg-white text-black hover:bg-[#e87315] hover:text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all relative group"
-                                >
-                                    <span className="relative z-10">
-                                        {connecting ? 'Applying...' : 'Submit Application'}
-                                    </span>
-                                    <div className="absolute bottom-0 right-0 w-0 h-0 border-style-solid border-t-[8px] border-t-transparent border-r-[8px] border-r-black/20" />
-                                </button>
+                                {applicableRoles?.length > 0 && (
+                                    <button
+                                        onClick={handleConnect}
+                                        disabled={connecting}
+                                        className="order-1 sm:order-2 flex-[1.5] py-4 bg-white text-black hover:bg-[#e87315] hover:text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all relative group"
+                                    >
+                                        <span className="relative z-10">
+                                            {connecting ? 'Applying...' : 'Submit Application'}
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -1340,6 +1435,155 @@ const ProjectDetail = () => {
                             <div className="absolute bottom-2 right-2 w-4 h-[1px] bg-white rotate-45" />
                             <div className="absolute bottom-2 right-2 w-1 h-4 bg-white" />
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {showMentorModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#050505]/90 backdrop-blur-md"
+                    onClick={() => setShowMentorModal(false)}
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                >
+                    <div
+                        className="relative bg-[#0a0a0a] border border-purple-500/20 w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                        onWheel={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                    >
+                        {/* Top accent */}
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-purple-500" />
+                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-purple-500" />
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-purple-500/10">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-purple-400">
+                                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-white uppercase tracking-tight">All Mentor Feedback</h4>
+                                    <p className="text-[10px] text-purple-300/70 font-medium">
+                                        {comments.filter(c => c.author?.role === 'mentor').length} expert insights
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowMentorModal(false)}
+                                className="p-2 border border-purple-500/20 hover:border-purple-500/50 text-purple-400/50 hover:text-purple-400 transition-all"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Scrollable comments */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 mentor-scroll"
+                            style={{ overscrollBehavior: 'contain' }}
+                        >
+
+                            {comments
+                                .filter(c => c.author?.role === 'mentor')
+                                .map((comment) => (
+                                    <div key={comment._id} className="group p-5 bg-black/40 border border-purple-500/10 hover:border-purple-500/30 transition-all">
+                                        <div className="flex gap-4">
+                                            <div className="relative flex-shrink-0">
+                                                <img
+                                                    src={comment.author?.profileImage}
+                                                    onError={(e) => {
+                                                        e.target.src = `https://ui-avatars.com/api/?background=6b21a8&color=fff&size=100&name=${comment.author?.name}&bold=true`;
+                                                    }}
+                                                    onClick={() => { navigate(`/dashboard/user/${comment.author?._id}`); setShowMentorModal(false); }}
+                                                    className="w-12 h-12 object-cover cursor-pointer hover:opacity-80 transition-opacity ring-2 ring-purple-500/20"
+                                                    alt={comment.author?.name}
+                                                />
+                                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-purple-500 rounded-md flex items-center justify-center border-2 border-black">
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
+                                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                                    <span
+                                                        onClick={() => { navigate(`/dashboard/user/${comment.author?._id}`); setShowMentorModal(false); }}
+                                                        className="text-sm font-black text-white hover:text-purple-400 transition-colors cursor-pointer"
+                                                    >
+                                                        {comment.author?.name}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded-full text-[9px] font-black text-purple-300 uppercase tracking-widest">
+                                                        ✦ Mentor
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-600">
+                                                        {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-300 leading-relaxed">{comment.content}</p>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                ))}
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAboutModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#050505]/90 backdrop-blur-md"
+                    onClick={() => setShowAboutModal(false)}
+                    onWheel={e => e.stopPropagation()}
+                >
+                    <div
+                        className="relative bg-[#0a0a0a] border border-white/10 w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                        onWheel={e => e.stopPropagation()}
+                    >
+                        {/* Top accent */}
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#e87315] to-transparent" />
+                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#e87315]" />
+                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#e87315]" />
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1 h-4 bg-[#e87315]" />
+                                <div>
+                                    <h4 className="text-sm font-black text-white uppercase tracking-widest">About Project</h4>
+                                    <p className="text-[10px] text-white/30 font-medium mt-0.5 uppercase tracking-widest">{project.title}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowAboutModal(false)}
+                                className="p-2 border border-white/10 hover:border-[#e87315]/50 text-white/30 hover:text-white transition-all"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div
+                            className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar"
+                            style={{ overscrollBehavior: 'contain' }}
+                            onWheel={e => e.stopPropagation()}
+                        >
+                            <p className="text-base text-white/70 leading-relaxed font-medium">
+                                {project.description}
+                            </p>
+                        </div>
+
+                        {/* Bottom corner */}
+                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#e87315]" />
                     </div>
                 </div>
             )}

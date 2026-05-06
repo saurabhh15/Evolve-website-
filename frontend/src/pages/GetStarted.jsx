@@ -198,8 +198,8 @@ const GetStarted = () => {
     };
 
     const handleSocialAuth = (provider) => {
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const base = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
+        // Changed to directly use production backend URL
+        const base = 'https://evolve-website.onrender.com';
         const authUrls = {
             Google: `${base}/api/auth/google`,
             GitHub: `${base}/api/auth/github`
@@ -229,7 +229,7 @@ const GetStarted = () => {
             {/* Main Content */}
             <div className="relative z-20 min-h-[100dvh] flex flex-col lg:flex-row w-full">
 
-                {/* ===== LEFT SIDE — visible on ALL screens ===== */}
+                {/* ===== LEFT SIDE - visible on ALL screens ===== */}
                 <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-10 xl:px-20 pt-16 pb-6 lg:py-12">
 
                     {/* Logo */}
@@ -266,7 +266,7 @@ const GetStarted = () => {
                         </p>
                     </div>
 
-                    {/* Pill badges — hidden on very small screens to save space */}
+                    {/* Pill badges - hidden on very small screens to save space */}
                     <div className="hidden sm:flex flex-wrap gap-2 mt-1 lg:mt-2">
                         {['Mentor Matching', 'Investor Access', 'Real Collaboration'].map((tag) => (
                             <span
@@ -279,7 +279,7 @@ const GetStarted = () => {
                     </div>
                 </div>
 
-                {/* ===== RIGHT SIDE — GLASSMORPHIC FORM ===== */}
+                {/* ===== RIGHT SIDE - GLASSMORPHIC FORM ===== */}
                 <div className="relative w-full lg:w-1/2 flex flex-col items-center justify-center p-4 sm:p-8 pb-12 lg:min-h-[100dvh]">
 
                     {/* Close / Home Button */}
@@ -545,5 +545,4 @@ const GetStarted = () => {
         </div>
     );
 };
-
 export default GetStarted;
