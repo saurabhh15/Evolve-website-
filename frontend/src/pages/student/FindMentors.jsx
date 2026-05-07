@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, GraduationCap, MessageSquare, MapPin,
-  ChevronRight, X, CheckCircle2, Sparkles, Zap, Star, Github
+  ChevronRight, X, CheckCircle2, Sparkles, Zap, Star, Cat
 } from 'lucide-react';
 import { userAPI, connectionAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
