@@ -6,18 +6,17 @@ import { getLenis } from '../hooks/useLenis';
 const menuItems = [
   { name: 'Events', path: '/events' },
   { name: 'ABOUT', path: '/about' },
-  { name: 'SUCCESS STORIES', path: '/success-stories' }, // Fixed typo "SUCESS"
+  { name: 'SUCCESS STORIES', path: '/success-stories' }, 
   { name: 'CONTACTS', path: '/contact' },
 ];
 
-// Pages with a dark/image hero where the navbar starts with white text
-// Added /about and /contact as requested
 const DARK_HERO_ROUTES = ['/', '/about', '/contact'];
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const curtainRef = useRef(null);
+  const buttonRef = useRef(null); // Added reference for the menu button
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -53,23 +52,27 @@ const Navbar = () => {
   // Curtain slide-in/out animation (clip-path)
   useEffect(() => {
     const el = curtainRef.current;
-    if (!el) return;
+    const btn = buttonRef.current;
+    if (!el || !btn) return;
 
-    // Fixed math for clip-path so the circle perfectly targets the menu button on mobile & desktop
-    const origin = scrolled ? 'calc(100% - 50px) 40px' : 'calc(100% - 50px) 40px';
+    // Calculate exact center of the button on the screen dynamically
+    const rect = btn.getBoundingClientRect();
+    const originX = rect.left + rect.width / 2;
+    const originY = rect.top + rect.height / 2;
+    const origin = `${originX}px ${originY}px`;
 
     if (menuOpen) {
       el.style.transition = 'none';
-      el.style.clipPath = `circle(0% at ${origin})`;
+      el.style.clipPath = `circle(0px at ${origin})`;
       el.style.opacity = '1';
-      void el.offsetWidth;
+      void el.offsetWidth; // Trigger reflow
       el.style.transition = 'clip-path 0.8s cubic-bezier(0.76, 0, 0.24, 1)';
       el.style.clipPath = `circle(150% at ${origin})`;
     } else {
       el.style.transition = 'clip-path 0.6s cubic-bezier(0.76, 0, 0.24, 1)';
-      el.style.clipPath = `circle(0% at ${origin})`;
+      el.style.clipPath = `circle(0px at ${origin})`;
     }
-  }, [menuOpen, scrolled]);
+  }, [menuOpen]); // Dependency on menuOpen ensures it calculates the fresh position when toggled
 
   const handleNavClick = (path) => {
     setMenuOpen(false);
@@ -78,7 +81,7 @@ const Navbar = () => {
     setTimeout(() => navigate(path), 500);
   };
 
-  // ─── Color Logic ───────────────────────────────────────────────
+  // Color Logic
   const logoColor = menuOpen
     ? '#434343'
     : scrolled
@@ -116,7 +119,7 @@ const Navbar = () => {
         .menu-link:hover { letter-spacing: -1px !important; }
       `}</style>
 
-      {/* ── NAVBAR ── */}
+      {/* NAVBAR */}
       <nav style={{
         position: 'fixed',
         left: '50%',
@@ -181,6 +184,7 @@ const Navbar = () => {
           </Link>
 
           <button
+            ref={buttonRef} // Attach the reference here
             type="button"
             onClick={() => {
               const next = !menuOpen;
@@ -229,13 +233,14 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* ── CURTAIN MENU ── */}
+      {/* CURTAIN MENU */}
       <div
         ref={curtainRef}
         // h-[100dvh] prevents mobile URL bar overflow issues
         className="fixed inset-0 z-90 bg-[#f5f0e8] h-[100dvh] w-full flex flex-col justify-center overflow-hidden"
         style={{
-          clipPath: `circle(0% at ${scrolled ? 'calc(100% - 50px) 40px' : 'calc(100% - 50px) 40px'})`,
+          // Use base values, let the hook override the clipPath dynamically
+          clipPath: 'circle(0px at 100% 0px)',
           opacity: 0,
           pointerEvents: menuOpen ? 'all' : 'none',
         }}
@@ -267,7 +272,7 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Bottom Footer Section (Responsive layout for mobile, strict original alignment on desktop) */}
+        {/* Bottom Footer Section */}
         <div 
           className="absolute bottom-6 md:bottom-10 left-0 w-full px-6 md:px-8 flex flex-col-reverse md:flex-row justify-between items-center md:items-end gap-6 md:gap-0 z-10"
           style={{
@@ -281,7 +286,7 @@ const Navbar = () => {
             Love working with passionate people and brands
           </p>
 
-          {/* Socials - Wraps neatly on mobile, stacks cleanly right on desktop */}
+          {/* Socials */}
           <div className="flex flex-row flex-wrap md:flex-col justify-center md:justify-end gap-2 md:gap-2 max-w-[300px] md:max-w-none">
             {[
               { label: 'X (Twitter)', href: 'https://twitter.com' },

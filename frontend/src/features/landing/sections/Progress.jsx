@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 
 const ScrollCard = ({ num, title, text }) => (
     // Fluid sizing: scales down for mobile, scales up for desktop
-    <div className="flex-shrink-0 w-[75vw] max-w-[280px] sm:max-w-none sm:w-[320px] md:w-[400px] h-[360px] sm:h-[420px] md:h-[480px] relative group">
+    <div className="flex-shrink-0 w-[75vw] max-w-[280px] sm:max-w-none sm:w-[320px] md:w-[400px] h-[360px] sm:h-[420px] md:h-[450px] relative group">
         {/* Shadow layer */}
         <div className="absolute inset-0 bg-black translate-x-2 translate-y-2 sm:translate-x-3 sm:translate-y-3 md:translate-x-4 md:translate-y-4 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform duration-300" />
 
@@ -132,7 +132,7 @@ const Progress = ({ scrollY }) => {
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(249,115,22,0.15),transparent_50%)]" />
 
                         <div
-                            className="text-center w-full mb-4 px-4 sm:px-6"
+                            className="text-center w-full mb-2 px-4 sm:px-6"
                             style={{
                                 transform: `translate3d(0, ${textY}px, 0)`,
                                 opacity: Math.min(percentage * 4, 1),

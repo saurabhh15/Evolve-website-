@@ -199,7 +199,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
           ) : (
             <>
               <MessageSquare size={16} strokeWidth={3} className="relative z-10 transition-transform group-hover/btn:scale-110" />
-              <span className="relative z-10">SECURE SESSION</span>
+              <span className="relative z-10">SEND REQUEST</span>
 
               {/* Architectural Chevron */}
               <div className="absolute right-6 flex items-center">
