@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { initSocket, disconnectSocket } from '../services/socket';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -8,9 +9,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Forced to production URL to prevent localhost Connection Refused errors.
-  // If you want to test the backend locally, change this to 'http://localhost:5000'
-  const API_URL = 'https://evolve-website.onrender.com';
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const API_URL = isLocalhost
+    ? 'http://localhost:5000'
+    : 'https://evolve-website.onrender.com';
 
   const setupSocket = (token) => {
     const socket = initSocket(token);
@@ -42,7 +44,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         try {
-          const res = await axios.get(`${API_URL}/api/auth/me`);
+          const res = await api.get('/auth/me');
 
           // UPDATE BOTH STATE + LOCALSTORAGE
           setUser(res.data);
@@ -62,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   // 2. Login Function
   const login = async (email, password) => {
-    const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
+    const res = await api.post('/auth/login', { email, password });
     
     localStorage.setItem('token', res.data.token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
@@ -70,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
     
     setUser(res.data.user);
-    setupSocket(res.data.token); // init socket on login
+    setupSocket(res.data.token);
     
     return res.data.user;
   };
