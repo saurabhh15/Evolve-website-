@@ -237,7 +237,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`relative flex items-center gap-3 px-5 py-3 transition-all duration-500 group ${isActive
                     ? 'bg-white text-black shadow-[4px_4px_0px_rgba(232,115,21,1)]'
-                    : 'text-white/40 hover:text-white hover:bg-white/[0.02]'
+                    : 'text-white/70  hover:text-white hover:bg-white/[0.02]'
                     }`}
                 >
                   {/* ── Active Bracket Detail ── */}
@@ -247,7 +247,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
 
                   <item.icon
                     size={14}
-                    className={`transition-colors duration-500 ${isActive ? 'text-black' : 'text-[#e87315]/50 group-hover:text-[#e87315]'}`}
+                    className={`transition-colors duration-500 ${isActive ? 'text-black' : 'text-[#e87315]/80 group-hover:text-[#e87315]'}`}
                     strokeWidth={isActive ? 3 : 2}
                   />
 
@@ -277,7 +277,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                 className="group relative p-3 bg-transparent transition-all duration-300"
               >
                 {/* ── Outer Frame ── */}
-                <div className="absolute inset-0 border border-white/5 group-hover:border-[#e87315]/50 transition-colors" />
+                <div className="absolute inset-0 border border-white/15 group-hover:border-[#e87315]/50 transition-colors" />
 
                 {/* ── Tactical Corner Cutout (Top Right) ── */}
                 <div className="absolute top-0 right-0 w-2 h-2 bg-[#080808] border-b border-l border-white/10 group-hover:border-[#e87315]/50 transition-colors" />
@@ -290,7 +290,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                   <Users
                     size={18}
                     strokeWidth={2}
-                    className="text-white/20 group-hover:text-white transition-all duration-300 group-hover:scale-110"
+                    className="text-white/60 group-hover:text-white transition-all duration-300 group-hover:scale-110"
                   />
                 </div>
 
@@ -303,7 +303,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                   className="group relative p-3 bg-transparent transition-all duration-300"
                 >
                   {/* ── Geometric Outer Frame ── */}
-                  <div className="absolute inset-0 border border-white/5 group-hover:border-[#e87315]/30 transition-colors" />
+                  <div className="absolute inset-0 border border-white/15 group-hover:border-[#e87315]/30 transition-colors" />
 
                   {/* ── Top-Left Bracket Detail ── */}
                   <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/20 group-hover:border-[#e87315] transition-colors" />
@@ -313,7 +313,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                     <Bell
                       size={18}
                       strokeWidth={2}
-                      className="text-white/20 group-hover:text-white group-hover:rotate-[15deg] transition-all duration-500"
+                      className="text-white/60 group-hover:text-white group-hover:rotate-[15deg] transition-all duration-500"
                     />
                   </div>
 
@@ -362,7 +362,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                               }));
                               setUnreadCount(notifications.requests?.length || 0);
                             }}
-                            className="group relative flex items-center gap-2 text-[9px] font-black text-white/30 hover:text-[#e87315] transition-all uppercase tracking-[0.15em]"
+                            className="group relative flex items-center gap-2 text-[9px] font-black text-white/50 hover:text-[#e87315] transition-all uppercase tracking-[0.15em]"
                           >
                             <span className="opacity-0 group-hover:opacity-100 transition-opacity"></span>
                             Mark All Read
@@ -392,7 +392,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                                   <img
                                     src={req.from?.profileImage}
                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?background=080808&color=e87315&size=100&name=${req.from?.name}&bold=true`; }}
-                                    className="w-10 h-10 object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500"
+                                    className="w-10 h-10 object-cover border border-white/15 grayscale group-hover:grayscale-0 transition-all duration-500"
                                     alt={req.from?.name}
                                   />
                                   <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#e87315] border border-[#080808]" />
@@ -403,7 +403,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                                     <p className="text-[11px] font-black text-white uppercase tracking-wider">{req.from?.name}</p>
                                     <span className="text-[8px] font-bold text-[#e87315]/40 uppercase tracking-tighter italic">Pending Action</span>
                                   </div>
-                                  <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest leading-none">
+                                  <p className="text-[10px] text-white/50 mt-1 uppercase tracking-widest leading-none">
                                     {req.type === 'mentor-request' ? '// mentorship_inquiry' : '// connection_request'}
                                   </p>
 
@@ -416,7 +416,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                                     </button>
                                     <button
                                       onClick={() => handleRequestAction(req._id, 'rejected')}
-                                      className="flex-1 py-2 bg-transparent border border-white/10 hover:border-red-500/50 text-white/20 hover:text-red-500 text-[9px] font-black uppercase tracking-[0.2em] transition-all"
+                                      className="flex-1 py-2 bg-transparent border border-white/15 hover:border-red-500/50 text-white/30 hover:text-red-500 text-[9px] font-black uppercase tracking-[0.2em] transition-all"
                                     >
                                       Decline
                                     </button>
@@ -452,9 +452,9 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                                     <p className="text-[10px] text-white/80 leading-snug tracking-wide">
                                       <span className="font-black text-[#e87315] uppercase tracking-widest">{notif.sender?.name}</span>
                                       <span className="mx-2 opacity-30">|</span>
-                                      <span className={notif.read ? 'text-white/40' : 'text-white'}>{notif.message}</span>
+                                      <span className={notif.read ? 'text-white/60' : 'text-white'}>{notif.message}</span>
                                     </p>
-                                    <p className="text-[8px] font-bold text-white/20 uppercase tracking-widest whitespace-nowrap pt-0.5">
+                                    <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest whitespace-nowrap pt-0.5">
                                       [{new Date(notif.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}]
                                     </p>
                                   </div>
@@ -475,10 +475,10 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                           {!notifications.requests?.length && !notifications.notifs?.length && (
                             <div className="flex flex-col items-center justify-center py-20 px-8 text-center opacity-20">
                               <div className="w-10 h-10 border border-white/20 flex items-center justify-center rotate-45 mb-6">
-                                <Bell size={16} className="-rotate-45" />
+                                <Bell size={18} className="-rotate-45" />
                               </div>
-                              <p className="text-[10px] text-white font-black uppercase tracking-[0.4em]">No notifications</p>
-                              <p className="text-[8px] text-white uppercase tracking-widest mt-2">No active data streams detected</p>
+                              <p className="text-[12px] text-white font-black uppercase tracking-[0.4em]">No notifications</p>
+                              <p className="text-[10px] text-white uppercase tracking-widest mt-2">No active data streams detected</p>
                             </div>
                           )}
                         </>
@@ -498,7 +498,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                         {/* Decorative technical brackets */}
                         <span className="text-white/10 group-hover:text-[#e87315]/40 transition-colors duration-500 font-light">[</span>
 
-                        <p className="text-[9px] font-black text-white/40 group-hover:text-[#e87315] uppercase tracking-[0.4em] transition-colors duration-500">
+                        <p className="text-[9px] font-black text-white/50 group-hover:text-[#e87315] uppercase tracking-[0.4em] transition-colors duration-500">
                           View all notifications
                         </p>
 
@@ -598,7 +598,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
                   }}
                   className={`relative flex items-center gap-4 px-6 py-4 transition-all duration-300 group ${isActive
                     ? 'bg-white text-black translate-x-2'
-                    : 'text-white/40 hover:text-white hover:bg-white/[0.02]'
+                    : 'text-white/70 hover:text-white hover:bg-white/[0.02]'
                     }`}
                 >
                   {/* ── Active Indicator Line ── */}

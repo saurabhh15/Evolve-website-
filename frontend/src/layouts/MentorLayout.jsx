@@ -245,7 +245,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`relative flex items-center gap-3 px-5 py-3 transition-all duration-500 group ${isActive
                     ? 'bg-white text-black shadow-[4px_4px_0px_rgba(232,115,21,1)]'
-                    : 'text-white/40 hover:text-white hover:bg-white/[0.02]'
+                    : 'text-white/70 hover:text-white hover:bg-white/[0.02]'
                     }`}
                 >
                   {/* ── Active Bracket Detail ── */}
@@ -255,7 +255,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
 
                   <item.icon
                     size={14}
-                    className={`transition-colors duration-500 ${isActive ? 'text-black' : 'text-[#e87315]/50 group-hover:text-[#e87315]'}`}
+                    className={`transition-colors duration-500 ${isActive ? 'text-black' : 'text-[#e87315]/80 group-hover:text-[#e87315]'}`}
                     strokeWidth={isActive ? 3 : 2}
                   />
 
@@ -285,7 +285,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                 className="group relative p-3 bg-transparent transition-all duration-300"
               >
                 {/* ── Outer Frame ── */}
-                <div className="absolute inset-0 border border-white/5 group-hover:border-[#e87315]/50 transition-colors" />
+                <div className="absolute inset-0 border border-white/15 group-hover:border-[#e87315]/50 transition-colors" />
 
                 {/* ── Tactical Corner Cutout (Top Right) ── */}
                 <div className="absolute top-0 right-0 w-2 h-2 bg-[#080808] border-b border-l border-white/10 group-hover:border-[#e87315]/50 transition-colors" />
@@ -298,7 +298,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                   <Users
                     size={18}
                     strokeWidth={2}
-                    className="text-white/20 group-hover:text-white transition-all duration-300 group-hover:scale-110"
+                    className="text-white/60 group-hover:text-white transition-all duration-300 group-hover:scale-110"
                   />
                 </div>
 
@@ -311,7 +311,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                   className="group relative p-3 bg-transparent transition-all duration-300"
                 >
                   {/* ── Geometric Outer Frame ── */}
-                  <div className="absolute inset-0 border border-white/5 group-hover:border-[#e87315]/30 transition-colors" />
+                  <div className="absolute inset-0 border border-white/15 group-hover:border-[#e87315]/30 transition-colors" />
 
                   {/* ── Top-Left Bracket Detail ── */}
                   <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/20 group-hover:border-[#e87315] transition-colors" />
@@ -321,7 +321,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                     <Bell
                       size={18}
                       strokeWidth={2}
-                      className="text-white/20 group-hover:text-white group-hover:rotate-[15deg] transition-all duration-500"
+                      className="text-white/60 group-hover:text-white group-hover:rotate-[15deg] transition-all duration-500"
                     />
                   </div>
 
@@ -343,7 +343,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                   <div className="absolute right-0 top-14 w-80 bg-[#101010] border border-white/[0.06] rounded-2xl shadow-2xl z-50 overflow-hidden">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-white/[0.01]">
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-white/5  bg-white/[0.01]">
                       <div className="flex items-center gap-3">
                         {/* ── Geometric Status Light ── */}
                         <div className={`w-1.5 h-1.5 rotate-45 ${unreadCount > 0 ? 'bg-[#e87315] shadow-[0_0_8px_#e87315]' : 'bg-white/10'}`} />
@@ -400,7 +400,7 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
                                   <img
                                     src={req.from?.profileImage}
                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?background=080808&color=e87315&size=100&name=${req.from?.name}&bold=true`; }}
-                                    className="w-10 h-10 object-cover border border-white/10 grayscale group-hover:grayscale-0 transition-all duration-500"
+                                    className="w-10 h-10 object-cover border border-white/15 grayscale group-hover:grayscale-0 transition-all duration-500"
                                     alt={req.from?.name}
                                   />
                                   <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#e87315] border border-[#080808]" />

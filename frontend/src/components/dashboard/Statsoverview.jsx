@@ -128,14 +128,14 @@ const StatsOverview = () => {
         border-b sm:border-b-0 border-white/[0.03] ${stat.id === 4 ? 'cursor-pointer' : ''}`}
         >
           {/* 1. TOP INDICATOR LINE (Ghost Architect Hallmark) */}
-          <div className="absolute top-0 left-0 w-1 h-[1px] bg-white/10 group-hover:bg-[#e87315] group-hover:w-full transition-all duration-700" />
+          <div className="absolute top-0 left-0 w-1 h-[1px] bg-white/25 group-hover:bg-[#e87315] group-hover:w-full transition-all duration-700" />
 
           {/* 2. HEADER: LABEL + ICON */}
           <div className="flex justify-between items-center mb-6">
-            <p className="text-white/20 text-[9px] font-bold tracking-[0.4em] uppercase italic group-hover:text-[#e87315] transition-colors">
+            <p className="text-white/60 text-[10px] font-bold tracking-[0.4em] uppercase italic group-hover:text-[#e87315] transition-colors">
               {stat.label}
             </p>
-            <div className="text-white/10 group-hover:text-[#e87315] transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
+            <div className="text-white/40 group-hover:text-[#e87315] transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
               <stat.icon size={14} strokeWidth={2.5} />
             </div>
           </div>
@@ -145,7 +145,7 @@ const StatsOverview = () => {
             {loading ? (
               <div className="w-16 h-10 bg-white/[0.02] animate-pulse border border-white/5" />
             ) : (
-              <h3 className="text-5xl font-light text-white tracking-tighter tabular-nums group-hover:tracking-normal transition-all duration-500 origin-left">
+              <h3 className="text-5xl font-light text-white/90 tracking-tighter tabular-nums group-hover:tracking-normal transition-all duration-500 origin-left">
                 {typeof stat.value === 'number'
                   ? stat.value.toString().padStart(2, '0')
                   : stat.value}
@@ -153,7 +153,7 @@ const StatsOverview = () => {
             )}
 
             {/* Optical Divider / Status Block */}
-            <div className="h-[2px] w-4 bg-white/[0.03] group-hover:bg-[#e87315]/40 transition-all" />
+            <div className="h-[2px] w-4 bg-white/20 group-hover:bg-[#e87315]/40 transition-all" />
 
             {/* Trend Indicator (Technical Overlay Style) */}
             {stat.trend && !loading && (

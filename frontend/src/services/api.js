@@ -209,5 +209,18 @@ export const authAPI = {
     changePassword: (data) => api.put('/auth/change-password', data),
 };
 
+// ── AI Suggestions ──────────────────────────────────────────
+export const suggestTeammates = (projectId) =>
+  fetch(`/api/ai/suggest-teammates/${projectId}`, {
+    method: "POST",
+    credentials: "include",
+  }).then((r) => r.json());
+
+export const suggestMentors = (projectId) =>
+  fetch(`/api/ai/suggest-mentors/${projectId}`, {
+    method: "POST",
+    credentials: "include",
+  }).then((r) => r.json());
+
 // Export the base api instance in case you need custom calls
 export default api;

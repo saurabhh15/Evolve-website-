@@ -18,9 +18,9 @@ const EventPage = () => {
                     <div className="mb-6 md:mb-8">
                         <button
                             onClick={() => navigate(`/dashboard`)}
-                            className="pointer-events-auto flex items-center gap-2 text-[14px] md:text-[16px] font-bold tracking-widest uppercase text-black/60 hover:text-[#e87315] transition-colors"
+                            className="pointer-events-auto flex items-center gap-2 text-[14px] md:text-[16px] font-black tracking-[0.2em] uppercase text-black/60 hover:text-[#e87315] transition-colors"
                         >
-                            <ArrowLeft size={18} />
+                            <ArrowLeft size={20} strokeWidth={2.5} />
                             Back to Dashboard
                         </button>
                     </div>
@@ -29,63 +29,63 @@ const EventPage = () => {
                 {/* HEADER SECTION */}
                 <div className="mb-10 md:mb-16 border-b-4 border-black pb-6 md:pb-8">
                     <h1 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter">
-                        Upcoming <span className="text-orange-500 italic">Events.</span>
+                        Upcoming <span className="text-[#e87315] italic">Events.</span>
                     </h1>
                 </div>
 
                 {/* EVENT LISTING */}
                 {/* ── No Events / Coming Soon Section ── */}
-                <div className="relative group overflow-hidden bg-[#080808] border border-white/[0.03] min-h-[350px] md:min-h-[400px] flex flex-col items-center justify-center p-6 sm:p-8 md:p-12 text-center transition-all duration-500 hover:border-[#e87315]/20 w-full">
+                <div className="relative group overflow-hidden bg-[#0c0c0c] border border-white/10 min-h-[350px] md:min-h-[400px] flex flex-col items-center justify-center p-6 sm:p-8 md:p-12 text-center transition-all duration-500 hover:border-[#e87315]/40 w-full">
 
                     {/* Animated Radar/Pulse Effect */}
                     <div className="relative mb-6 md:mb-8">
                         <div className="absolute inset-0 bg-[#e87315]/20 rounded-full animate-ping scale-150 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative w-16 h-16 md:w-20 md:h-20 border border-white/10 flex items-center justify-center rotate-45 group-hover:border-[#e87315]/40 transition-colors duration-500">
+                        <div className="relative w-16 h-16 md:w-20 md:h-20 border border-white/20 flex items-center justify-center rotate-45 group-hover:border-[#e87315]/60 transition-colors duration-500">
                             <CalendarOff
                                 size={28}
-                                className="text-white/10 -rotate-45 group-hover:text-[#e87315] transition-colors duration-500 md:w-8 md:h-8"
+                                className="text-white/40 -rotate-45 group-hover:text-[#e87315] transition-colors duration-500 md:w-8 md:h-8"
                             />
                         </div>
                     </div>
 
                     {/* Text Content */}
                     <div className="relative z-10 max-w-md px-4">
-                        <h3 className="text-[12px] md:text-[14px] font-black tracking-[0.4em] md:tracking-[0.6em] uppercase text-white mb-4 italic">
+                        <h3 className="text-[14px] md:text-[16px] font-black tracking-[0.4em] md:tracking-[0.6em] uppercase text-white/90 mb-4 italic">
                             No Upcoming Events yet
                         </h3>
 
                         <div className="flex items-center justify-center gap-2 md:gap-3 mb-6">
-                            <div className="h-px w-6 md:w-8 bg-[#e87315]/30" />
-                            <p className="text-[9px] md:text-[11px] font-bold text-[#e87315] uppercase tracking-[0.1em] md:tracking-[0.2em]">
+                            <div className="h-px w-6 md:w-8 bg-[#e87315]/50" />
+                            <p className="text-[10px] md:text-[11px] font-bold text-[#e87315] uppercase tracking-[0.2em] md:tracking-[0.3em]">
                                 Status: Monitoring for Updates
                             </p>
-                            <div className="h-px w-6 md:w-8 bg-[#e87315]/30" />
+                            <div className="h-px w-6 md:w-8 bg-[#e87315]/50" />
                         </div>
 
-                        <p className="text-xs md:text-sm text-white/40 leading-relaxed font-medium italic mb-8">
+                        <p className="text-xs md:text-sm text-white/60 leading-relaxed font-medium italic mb-8">
                             No upcoming events at this time. Sessions, workshops, and meetups will be listed here as they are scheduled. Stay tuned.
                         </p>
 
                         {/* Coming Soon Badge */}
-                        <div className="inline-flex items-center gap-3 px-5 md:px-6 py-2 bg-white/[0.02] border border-white/5 rounded-full group-hover:border-[#e87315]/20 transition-all">
-                            <span className="relative flex h-2 w-2">
+                        <div className="inline-flex items-center gap-3 px-5 md:px-6 py-2.5 bg-white/[0.05] border border-white/10 rounded-full group-hover:border-[#e87315]/40 transition-all">
+                            <span className="relative flex h-2.5 w-2.5">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e87315] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#e87315]"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#e87315]"></span>
                             </span>
-                            <span className="text-[9px] md:text-[10px] font-black text-white/60 uppercase tracking-widest">
+                            <span className="text-[10px] md:text-[11px] font-black text-white/80 uppercase tracking-widest">
                                 Events Coming Soon
                             </span>
                         </div>
                     </div>
 
                     {/* Architect Signatures */}
-                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#e87315]" />
-                    <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/10 group-hover:border-[#e87315] transition-colors" />
-                    <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/10 group-hover:border-[#e87315] transition-colors" />
-                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#e87315]" />
+                    <div className="absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-[#e87315]" />
+                    <div className="absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-white/20 group-hover:border-[#e87315] transition-colors" />
+                    <div className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-white/20 group-hover:border-[#e87315] transition-colors" />
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-[#e87315]" />
 
                     {/* Scanning Line Effect */}
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#e87315]/10 to-transparent translate-y-[-100%] group-hover:translate-y-[400px] transition-transform duration-[3s] ease-linear" />
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#e87315]/30 to-transparent translate-y-[-100%] group-hover:translate-y-[400px] transition-transform duration-[3s] ease-linear" />
                 </div>
             </div>
 
@@ -113,7 +113,7 @@ const EventPage = () => {
                         <div className="max-w-2xl">
                             <h2 className="text-4xl sm:text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4 md:mb-6">
                                 Don't Just <br className="hidden sm:block" />
-                                <span className="text-orange-500 italic">Watch.</span> Build.
+                                <span className="text-[#e87315] italic">Watch.</span> Build.
                             </h2>
                             <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] md:text-xs leading-relaxed">
                                 Your academic project is a startup waiting to happen. <br className="hidden sm:block" />
@@ -124,7 +124,7 @@ const EventPage = () => {
                         {/* The Persistent "Join Now" Link */}
                         <Link
                             to="/get-started"
-                            className="bg-orange-500 text-black px-8 py-4 md:px-12 md:py-6 font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all flex items-center gap-3 md:gap-4 text-lg md:text-2xl border-4 border-black group shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:shadow-none w-full sm:w-auto justify-center"
+                            className="bg-[#e87315] text-black px-8 py-4 md:px-12 md:py-6 font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all flex items-center gap-3 md:gap-4 text-lg md:text-2xl border-4 border-black group shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] md:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:shadow-none w-full sm:w-auto justify-center"
                         >
                             Join Evolve Now
                             <Zap

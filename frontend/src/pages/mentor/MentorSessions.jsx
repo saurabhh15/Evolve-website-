@@ -46,22 +46,22 @@ const MentorSessions = () => {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-evolve-in">
         <div>
-          <div className="flex items-center gap-3 mb-3">
-             <div className="w-12 h-12 bg-[#161616] rounded-xl flex items-center justify-center border border-white/[0.04] shadow-lg">
-               <Calendar size={20} className="text-[#e87315]" strokeWidth={2.5} />
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#0c0c0c] rounded-xl flex items-center justify-center border border-white/20 shadow-lg">
+               <Calendar size={24} className="text-[#e87315]/80" strokeWidth={2} />
              </div>
-             <p className="text-[#e87315] text-xs font-black tracking-[0.2em] uppercase">Calendar</p>
+             <p className="text-[#e87315]/80 text-[11px] sm:text-[12px] font-black tracking-[0.3em] uppercase">Calendar</p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter">
+          <h1 className="text-4xl md:text-5xl font-black text-white/90 tracking-tighter">
             Your Sessions
           </h1>
-          <p className="text-gray-400 mt-2 font-medium max-w-xl">
-            You have <span className="text-white font-bold">{upcomingSessions.length} upcoming sessions</span> scheduled this week.
+          <p className="text-white/60 mt-3 text-sm sm:text-base font-medium max-w-xl leading-relaxed">
+            You have <span className="text-white/90 font-black">{upcomingSessions.length} upcoming sessions</span> scheduled this week.
           </p>
         </div>
 
-        <button className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.08] text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all">
-          Sync Calendar <ArrowRight size={14} className="text-[#e87315]" />
+        <button className="flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 bg-[#0c0c0c] border border-white/20 hover:border-[#e87315]/50 text-white/90 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300">
+          Sync Calendar <ArrowRight size={16} className="text-[#e87315]" />
         </button>
       </header>
 
@@ -69,65 +69,67 @@ const MentorSessions = () => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         
         {/* Left: Schedule Feed */}
-        <div className="xl:col-span-8 space-y-6">
+        <div className="xl:col-span-8 space-y-5 sm:space-y-6">
           {upcomingSessions.map((session, index) => (
             <motion.div
               key={session.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`relative bg-[#101010] border rounded-[2rem] p-6 md:p-8 transition-all duration-300 overflow-hidden ${
-                session.isStartingSoon ? 'border-[#e87315]/50 shadow-[0_0_30px_rgba(232,115,21,0.1)]' : 'border-white/[0.04] hover:border-[#e87315]/20'
+              className={`relative group bg-[#0c0c0c] border rounded-[2rem] p-6 sm:p-8 transition-all duration-300 overflow-hidden ${
+                session.isStartingSoon ? 'border-[#e87315]/50 shadow-[0_0_30px_rgba(232,115,21,0.15)]' : 'border-white/10 hover:border-[#e87315]/40'
               }`}
             >
               {session.isStartingSoon && (
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#e87315] to-[#f97316] animate-pulse" />
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#e87315] to-[#f97316] animate-pulse" />
               )}
 
               <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between mb-6">
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-[11px] font-black text-[#e87315] uppercase tracking-widest bg-[#e87315]/10 px-3 py-1 rounded-md border border-[#e87315]/20">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
+                    <span className="text-[10px] sm:text-[11px] font-black text-[#e87315] uppercase tracking-widest bg-[#e87315]/10 px-3 py-1.5 rounded-md border border-[#e87315]/20">
                       {session.date}
                     </span>
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                      <Clock size={12} /> {session.time}
+                    <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-white/50 group-hover:text-white/80 transition-colors uppercase tracking-widest">
+                      <Clock size={14} className="sm:w-4 sm:h-4" /> {session.time}
                     </span>
                   </div>
-                  <h3 className="text-2xl font-black text-white">{session.team}</h3>
-                  <p className="text-sm text-gray-500 font-medium">with {session.mentees} • <span className="text-gray-300">{session.type}</span></p>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white/90 group-hover:text-[#e87315] transition-colors tracking-tight">{session.team}</h3>
+                  <p className="text-[12px] sm:text-[13px] text-white/60 font-bold tracking-wide mt-1.5">
+                    with <span className="text-white/90">{session.mentees}</span> <span className="mx-1.5 opacity-50">•</span> <span className="text-[#e87315]/80">{session.type}</span>
+                  </p>
                 </div>
                 
                 {/* Actions */}
-                <div className="flex items-center gap-3">
-                  <button className="p-3 bg-[#161616] hover:bg-white/[0.05] border border-white/[0.04] rounded-xl text-gray-400 hover:text-white transition-colors">
-                    <MoreHorizontal size={18} />
+                <div className="flex items-center gap-3 sm:gap-4 mt-2 md:mt-0 shrink-0">
+                  <button className="p-3 sm:p-3.5 bg-white/[0.02] hover:bg-white/[0.05] border border-white/10 hover:border-white/30 rounded-xl text-white/50 hover:text-white transition-all">
+                    <MoreHorizontal size={20} />
                   </button>
                   <a 
                     href={session.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    className={`flex items-center justify-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all ${
                       session.isStartingSoon 
-                        ? 'bg-[#e87315] hover:bg-[#f97316] text-[#080808] shadow-[0_0_20px_rgba(232,115,21,0.3)] animate-pulse hover:animate-none'
-                        : 'bg-white/[0.03] hover:bg-white/[0.08] text-white border border-white/[0.05]'
+                        ? 'bg-[#e87315] hover:bg-[#f97316] text-[#080808] shadow-[0_0_20px_rgba(232,115,21,0.2)] animate-pulse hover:animate-none'
+                        : 'bg-white/[0.03] hover:bg-white/[0.08] text-white/90 border border-white/10 hover:border-white/30'
                     }`}
                   >
-                    <Video size={16} strokeWidth={2.5} /> Join Room
+                    <Video size={16} strokeWidth={2.5} className="sm:w-[18px] sm:h-[18px]" /> Join Room
                   </a>
                 </div>
               </div>
 
               {/* Agenda Section */}
-              <div className="bg-[#161616] border border-white/[0.02] rounded-2xl p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <FileText size={14} className="text-gray-500" />
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Proposed Agenda</span>
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-5 sm:p-6 mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={14} className="text-white/40" />
+                  <span className="text-[10px] sm:text-[11px] font-black text-white/50 uppercase tracking-widest">Proposed Agenda</span>
                 </div>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {session.agenda.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-gray-300 font-medium">
-                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                    <li key={i} className="flex items-start gap-2.5 text-[12px] sm:text-[13px] text-white/80 font-medium">
+                      <CheckCircle2 size={16} className="text-emerald-500/80 shrink-0 mt-0.5" />
                       {item}
                     </li>
                   ))}
@@ -139,34 +141,34 @@ const MentorSessions = () => {
 
         {/* Right: Quick Stats / Prep */}
         <div className="xl:col-span-4 space-y-6">
-          <div className="card-structured p-8 animate-evolve-in" style={{ animationDelay: '0.2s' }}>
-             <h3 className="text-lg font-black text-white mb-6">Mentorship Rules</h3>
-             <div className="space-y-5">
+          <div className="card-structured p-6 sm:p-8 animate-evolve-in" style={{ animationDelay: '0.2s' }}>
+             <h3 className="text-[16px] sm:text-lg font-black text-white/90 mb-6 sm:mb-8 uppercase tracking-tight">Mentorship Rules</h3>
+             <div className="space-y-6">
                <div className="flex gap-4">
-                 <div className="w-8 h-8 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/20">
-                   <span className="text-[#e87315] font-black text-xs">01</span>
+                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/30">
+                   <span className="text-[#e87315] font-black text-[11px] sm:text-xs">01</span>
                  </div>
                  <div>
-                   <h4 className="text-sm font-bold text-white mb-1">Be Punctual</h4>
-                   <p className="text-xs text-gray-500 leading-relaxed">Join the meeting link 2 minutes early to ensure technical setup.</p>
+                   <h4 className="text-[13px] sm:text-[14px] font-black text-white/90 mb-1.5 uppercase tracking-wide">Be Punctual</h4>
+                   <p className="text-[11px] sm:text-[12px] text-white/60 leading-relaxed font-medium">Join the meeting link 2 minutes early to ensure technical setup.</p>
                  </div>
                </div>
                <div className="flex gap-4">
-                 <div className="w-8 h-8 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/20">
-                   <span className="text-[#e87315] font-black text-xs">02</span>
+                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/30">
+                   <span className="text-[#e87315] font-black text-[11px] sm:text-xs">02</span>
                  </div>
                  <div>
-                   <h4 className="text-sm font-bold text-white mb-1">Actionable Feedback</h4>
-                   <p className="text-xs text-gray-500 leading-relaxed">Leave the team with 2-3 clear action items at the end of every call.</p>
+                   <h4 className="text-[13px] sm:text-[14px] font-black text-white/90 mb-1.5 uppercase tracking-wide">Actionable Feedback</h4>
+                   <p className="text-[11px] sm:text-[12px] text-white/60 leading-relaxed font-medium">Leave the team with 2-3 clear action items at the end of every call.</p>
                  </div>
                </div>
                <div className="flex gap-4">
-                 <div className="w-8 h-8 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/20">
-                   <span className="text-[#e87315] font-black text-xs">03</span>
+                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-[#e87315]/10 flex items-center justify-center shrink-0 border border-[#e87315]/30">
+                   <span className="text-[#e87315] font-black text-[11px] sm:text-xs">03</span>
                  </div>
                  <div>
-                   <h4 className="text-sm font-bold text-white mb-1">Log Outcomes</h4>
-                   <p className="text-xs text-gray-500 leading-relaxed">Submit brief session notes on the platform for tracking progress.</p>
+                   <h4 className="text-[13px] sm:text-[14px] font-black text-white/90 mb-1.5 uppercase tracking-wide">Log Outcomes</h4>
+                   <p className="text-[11px] sm:text-[12px] text-white/60 leading-relaxed font-medium">Submit brief session notes on the platform for tracking progress.</p>
                  </div>
                </div>
              </div>
