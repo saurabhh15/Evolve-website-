@@ -198,8 +198,9 @@ const GetStarted = () => {
     };
 
     const handleSocialAuth = (provider) => {
-        // Changed to directly use production backend URL
-        const base = 'https://evolve-website.onrender.com';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const base = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
+        
         const authUrls = {
             Google: `${base}/api/auth/google`,
             GitHub: `${base}/api/auth/github`
