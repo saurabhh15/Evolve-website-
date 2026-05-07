@@ -32,18 +32,38 @@ exports.createProject = async (req, res, next) => {
  */
 exports.getAllProjects = async (req, res, next) => {
   try {
+    // 1. Get page and limit from the frontend request (default to page 1, limit 12)
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 12;
+
+    // 2. Calculate how many projects to skip based on the current page
+    const skip = (page - 1) * limit;
+
+    // 3. Fetch ONLY the specific chunk of projects for this page
     const projects = await Project.find()
       .populate('creator', 'name role college profileImage')
       .sort({ createdAt: -1 })
-      .limit(100) // Prevent loading too many at once
-      .lean(); // Optimization added here
+      .skip(skip)      // Skips the projects from previous pages
+      .limit(limit)    // Limits to the requested amount (e.g., 2 or 12)
+      .lean();         // Keeps it fast
 
-    res.json(projects);
+    // 4. Count total projects in the database so the frontend knows when to hide the button
+    const totalProjects = await Project.countDocuments();
+    const totalPages = Math.ceil(totalProjects / limit);
+
+    // 5. Send back the structured response that your updated React frontend expects
+    res.status(200).json({
+      projects: projects,
+      totalPages: totalPages,
+      currentPage: page,
+      totalProjects: totalProjects
+    });
+    
   } catch (error) {
+    console.error("Error in getAllProjects:", error);
     next(error);
   }
 };
-
 /**
  * @desc    Search and filter projects
  * @route   GET /api/projects/search?category=AI/ML&stage=mvp&search=blockchain

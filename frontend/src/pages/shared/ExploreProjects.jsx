@@ -24,21 +24,35 @@ const ExploreProjects = () => {
   const stages = ['All', 'idea', 'prototype', 'mvp', 'launched'];
   const lookingForOptions = ['All', 'mentor', 'co-founder', 'investor', 'feedback', 'team-member'];
 
+  const PAGE_LIMIT = 2;
+
   // projects fetch
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await projectAPI.getAll({ page: 1, limit: 12 });
+        const response = await projectAPI.getAll({ page: 1, limit: PAGE_LIMIT });
 
-        setAllProjects(response.data);
+        // Safely extract projects based on standard backend pagination formats
+        const fetchedProjects = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.projects || response.data.data || []);
+
+        setAllProjects(fetchedProjects);
         const initialLikes = {};
-        response.data.forEach(p => {
-          initialLikes[p._id] = p.likes.includes(user?._id);
+        fetchedProjects.forEach(p => {
+          initialLikes[p._id] = p.likes?.includes(user?._id);
         });
         setLikedProjects(initialLikes);
-        setHasMore(response.data.length === 12);
+
+        // Calculate hasMore based on backend totals or array length
+        const totalPages = response.data.totalPages || response.data.pagination?.pages;
+        if (totalPages !== undefined) {
+          setHasMore(1 < totalPages);
+        } else {
+          setHasMore(fetchedProjects.length === PAGE_LIMIT);
+        }
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load projects. Please try again.');
       } finally {
@@ -46,7 +60,7 @@ const ExploreProjects = () => {
       }
     };
     fetchProjects();
-  }, []);
+  }, [user?._id]);
 
   // ========== FILTERS ==========
   const hasActiveFilters = searchTerm || selectedCategory || selectedStage || selectedLookingFor;
@@ -67,8 +81,8 @@ const ExploreProjects = () => {
           p._id === projectId
             ? {
               ...p, likes: likedProjects[projectId]
-                ? p.likes.filter(id => id !== 'me')
-                : [...p.likes, 'me']
+                ? p.likes.filter(id => id !== user?._id && id !== 'me')
+                : [...(p.likes || []), user?._id || 'me']
             }
             : p
         )
@@ -82,14 +96,25 @@ const ExploreProjects = () => {
     try {
       setLoadingMore(true);
       const nextPage = page + 1;
-      const response = await projectAPI.getAll({ page: nextPage, limit: 12 });
-      setAllProjects(prev => [...prev, ...response.data]);
+      const response = await projectAPI.getAll({ page: nextPage, limit: PAGE_LIMIT });
+      
+      const fetchedProjects = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.projects || response.data.data || []);
+
+      setAllProjects(prev => [...prev, ...fetchedProjects]);
       const moreLikes = {};
-      response.data.forEach(p => {
-        moreLikes[p._id] = p.likes.includes(user?._id);
+      fetchedProjects.forEach(p => {
+        moreLikes[p._id] = p.likes?.includes(user?._id);
       });
       setLikedProjects(prev => ({ ...prev, ...moreLikes }));
-      setHasMore(response.data.length === 12);
+      
+      const totalPages = response.data.totalPages || response.data.pagination?.pages;
+      if (totalPages !== undefined) {
+        setHasMore(nextPage < totalPages);
+      } else {
+        setHasMore(fetchedProjects.length === PAGE_LIMIT);
+      }
       setPage(nextPage);
     } catch (err) {
       console.error('Failed to load more:', err);
@@ -100,12 +125,12 @@ const ExploreProjects = () => {
 
   const filteredProjects = useMemo(() => allProjects.filter(p => {
     const matchesSearch = !searchTerm ||
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.tagline.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
+      p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.tagline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.tags?.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !selectedCategory || selectedCategory === 'All' || p.category === selectedCategory;
     const matchesStage = !selectedStage || selectedStage === 'All' || p.stage === selectedStage;
-    const matchesLookingFor = !selectedLookingFor || selectedLookingFor === 'All' || p.lookingFor.includes(selectedLookingFor);
+    const matchesLookingFor = !selectedLookingFor || selectedLookingFor === 'All' || p.lookingFor?.includes(selectedLookingFor);
     return matchesSearch && matchesCategory && matchesStage && matchesLookingFor;
   }), [searchTerm, selectedCategory, selectedStage, selectedLookingFor, allProjects]);
 
@@ -168,7 +193,7 @@ const ExploreProjects = () => {
   return (
     <div className="w-full space-y-8 px-4 md:px-8 pb-10">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pt-10 pb-16 border-b border-white/5">
         <div className="relative">
           {/* Vertical Technical Accent */}
@@ -193,9 +218,6 @@ const ExploreProjects = () => {
 
         {/* Search Module */}
         <div className="relative w-full md:w-[450px] flex-shrink-0 group">
-          {/* Top Label */}
-
-
           <Search
             className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-hover:text-[#e87315] transition-colors z-10"
             size={18}
@@ -219,7 +241,7 @@ const ExploreProjects = () => {
         </div>
       </header>
 
-      {/* ── Filters System ── */}
+      {/* Filters System */}
       <div className="py-12 border-b border-white/5 animate-evolve-in" style={{ animationDelay: '0.08s' }}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
           <div className="flex items-center gap-4">
@@ -305,7 +327,7 @@ const ExploreProjects = () => {
                 className="group relative flex flex-col bg-[#080808] border border-white/10 hover:border-[#e87315] transition-all duration-500 cursor-pointer animate-evolve-in shadow-2xl"
                 style={{ animationDelay: `${0.15 + (index % 6) * 0.06}s` }}
               >
-                {/* ── Image Module ── */}
+                {/* Image Module */}
                 <div className="relative h-56 overflow-hidden border-b border-white/5">
                   <img
                     src={project.images?.[0] || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800'}
@@ -327,7 +349,7 @@ const ExploreProjects = () => {
                   </div>
                 </div>
 
-                {/* ── Card Body ── */}
+                {/* Card Body */}
                 <div className="flex flex-col flex-1 p-8 gap-7">
 
                   <div className="space-y-3">
@@ -435,7 +457,7 @@ const ExploreProjects = () => {
 
 
       ) : (
-        /* ── System Null State ── */
+        /* System Null State */
         <div className="relative border border-white/5 bg-white/[0.01] py-32 px-10 animate-evolve-in flex flex-col items-center justify-center overflow-hidden" style={{ animationDelay: '0.2s' }}>
           {/* Background Grid Accent */}
           <div className="absolute inset-0 bg-[radial-gradient(#e87315_1px,transparent_1px)] bg-[size:40px_40px] opacity-[0.03] pointer-events-none" />
@@ -528,6 +550,5 @@ const ExploreProjects = () => {
     </div>
   );
 };
-
 
 export default ExploreProjects;

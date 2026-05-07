@@ -214,7 +214,7 @@ const StudentLayout = ({ children, setActiveTab, activeTab }) => {
             {/* <div className="w-10 h-10 bg-gradient-to-br from-[#e87315] to-[#f4f1ea] rounded-xl flex items-center justify-center shadow-lg shadow-[#e87315]/[0.1]">
               <span className="font-black text-[#080808] text-xl leading-none">E</span>
             </div> */}
-            <div className='w-12 h-11 rounded-xl flex'>
+            <div className='w-8 h-8 md:w-9 md:h-9 rounded-xl flex'>
               <img className=' w-19' src='/Evolve.png' alt="evolve-logo" />
             </div>
             <span className="text-3xl font-black text-white tracking-tighter">
