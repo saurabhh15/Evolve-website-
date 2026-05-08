@@ -149,13 +149,15 @@ const MentorLayout = ({ children, setActiveTab, activeTab }) => {
     const onMessage = () => setUnreadMessages(prev => prev + 1);
 
     const onNotification = (e) => {
-      const notification = e.detail;
-      setUnreadCount(prev => prev + 1);
-      setNotifications(prev => ({
-        ...prev,
-        notifs: [notification, ...(prev.notifs || [])].slice(0, 3)
-      }));
-    };
+    const notification = e.detail;
+    // Don't add connection requests to notifs — they show in requests section
+    if (notification.type === 'connection_request' || notification.type === 'connection_accepted') return;
+    setUnreadCount(prev => prev + 1);
+    setNotifications(prev => ({
+      ...prev,
+      notifs: [notification, ...(prev.notifs || [])].slice(0, 3)
+    }));
+  };
 
     const onConnectionRequest = (e) => {
       const request = e.detail;
