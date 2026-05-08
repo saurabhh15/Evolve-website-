@@ -2,122 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, GraduationCap, MessageSquare, MapPin,
-  ChevronRight, X, CheckCircle2, Sparkles, Zap, Star, Cat
+  ChevronRight, X, CheckCircle2, Zap, Star, Briefcase
 } from 'lucide-react';
 import { userAPI, connectionAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import AISuggestionCard from '../../components/shared/AISuggestionCard';
 
 const CATEGORIES = ['All Mentors', 'Engineering', 'Product & Design', 'Business & Growth'];
 
-// ─── AI MENTOR CARD (matches architect theme) ─────────────────────────────────
-const AIMentorCard = ({ suggestion }) => {
-  const navigate = useNavigate();
-  const { user, matchScore, reason } = suggestion;
-  if (!user) return null;
-
-  const scoreColor =
-    matchScore >= 80 ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10' :
-    matchScore >= 60 ? 'text-[#e87315] border-[#e87315]/40 bg-[#e87315]/10' :
-    'text-white/50 border-white/20 bg-white/5';
-
-  return (
-    <div
-      onClick={() => navigate(`/dashboard/mentor/${user._id}`)}
-      className="group relative bg-[#0c0c0c] border border-white/10 hover:border-[#e87315]/40 transition-all duration-500 overflow-hidden cursor-pointer"
-    >
-      {/* Top accent */}
-      <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#e87315]/60 via-[#e87315]/20 to-transparent" />
-      <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-[#e87315]" />
-
-      <div className="p-5 sm:p-6 space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-shrink-0">
-              <img
-                src={user.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`}
-                onError={e => {
-                  e.target.src = `https://ui-avatars.com/api/?background=111111&color=e87315&size=100&name=${user.name}&bold=true`;
-                }}
-                alt={user.name}
-                className="w-12 h-12 object-cover border border-white/20 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
-              />
-              <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t border-l border-[#e87315] opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-black text-white/90 uppercase tracking-tight group-hover:text-[#e87315] transition-colors truncate">
-                {user.name}
-              </p>
-              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest truncate mt-0.5">
-                {user.company || 'Freelancer'}
-              </p>
-            </div>
-          </div>
-
-          {/* Match Score */}
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 border text-[11px] font-black uppercase tracking-wider flex-shrink-0 ${scoreColor}`}>
-            <Zap size={11} />
-            {matchScore}%
-          </div>
-        </div>
-
-        {/* AI Reason */}
-        <div className="relative bg-[#080808] border border-[#e87315]/20 p-3.5">
-          <div className="absolute top-0 left-0 w-1 h-1 bg-[#e87315]/60" />
-          <p className="text-[10px] font-black text-[#e87315] uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-            <Sparkles size={10} /> AI Match Reason
-          </p>
-          <p className="text-[11px] text-white/70 font-medium leading-relaxed italic">
-            "{reason}"
-          </p>
-        </div>
-
-        {/* Expertise Tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {user.expertise?.slice(0, 3).map(s => (
-            <span key={s} className="px-2.5 py-1 bg-white/[0.04] border border-white/10 text-[9px] font-black text-white/50 uppercase tracking-tighter">
-              {s}
-            </span>
-          ))}
-        </div>
-
-        {/* Mentor Stats */}
-        <div className="grid grid-cols-3 border border-white/10 bg-white/[0.02]">
-          <div className="p-2.5 border-r border-white/10 text-center">
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-1">Rating</p>
-            <span className="text-[12px] font-black text-white/90 italic flex items-center justify-center gap-0.5">
-              <Star size={9} className="text-[#e87315]" fill="currentColor" />
-              {user.rating || 'N/A'}
-            </span>
-          </div>
-          <div className="p-2.5 border-r border-white/10 text-center">
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-1">Sessions</p>
-            <span className="text-[12px] font-black text-white/90 italic">{user.sessionsHeld || 0}</span>
-          </div>
-          <div className="p-2.5 text-center">
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-1">Reply</p>
-            <span className="text-[10px] font-black text-[#e87315] italic">{user.responseTime?.replace('< ', '') || '48h'}</span>
-          </div>
-        </div>
-
-        {/* Meta */}
-        <div className="flex items-center gap-4 text-[10px] text-white/40 font-bold uppercase tracking-widest border-t border-white/10 pt-3">
-          {user.location && (
-            <span className="flex items-center gap-1"><MapPin size={10} /> {user.location.split(',')[0]}</span>
-          )}
-          <span className={`flex items-center gap-1 ${user.mentorStatus === 'Accepting Mentees' ? 'text-emerald-400' : 'text-[#e87315]'}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${user.mentorStatus === 'Accepting Mentees' ? 'bg-emerald-400 animate-pulse' : 'bg-[#e87315]'}`} />
-            {user.mentorStatus === 'Accepting Mentees' ? 'Available' : 'Limited'}
-          </span>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-white/20 group-hover:bg-[#e87315] transition-colors" />
-    </div>
-  );
-};
-
-// ─── AI MENTOR PANEL ──────────────────────────────────────────────────────────
 const AIMentorPanel = ({ projectId, onClose }) => {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,14 +35,12 @@ const AIMentorPanel = ({ projectId, onClose }) => {
 
   return (
     <div className="relative bg-[#080808] border border-[#e87315]/30 overflow-hidden mt-8">
-      {/* Header accent */}
       <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#e87315] via-[#e87315]/40 to-transparent" />
 
-      {/* Header */}
       <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-white/10">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 border border-[#e87315]/40 bg-[#e87315]/10 flex items-center justify-center">
-            <Sparkles size={18} className="text-[#e87315]" />
+            <Zap size={18} className="text-[#e87315]" />
           </div>
           <div>
             <h4 className="text-[12px] font-black text-white/90 uppercase tracking-[0.4em] italic">
@@ -169,7 +59,6 @@ const AIMentorPanel = ({ projectId, onClose }) => {
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-6 sm:p-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-5">
@@ -192,7 +81,7 @@ const AIMentorPanel = ({ projectId, onClose }) => {
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {suggestions.map((s, i) => <AIMentorCard key={i} suggestion={s} />)}
+              {suggestions.map((s, i) => <AISuggestionCard key={i} suggestion={s} type="mentor" />)}
             </div>
           </>
         ) : (
@@ -209,7 +98,6 @@ const AIMentorPanel = ({ projectId, onClose }) => {
   );
 };
 
-// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const isAvailable = status === 'Accepting Mentees';
   return (
@@ -224,11 +112,9 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ─── MENTOR CARD ──────────────────────────────────────────────────────────────
 const MentorCard = ({ mentor, isAccepted, isPending }) => {
   const [connecting, setConnecting] = useState(false);
   const [localPending, setLocalPending] = useState(isPending);
-  const [localAccepted] = useState(isAccepted);
   const navigate = useNavigate();
 
   const handleConnect = async () => {
@@ -267,7 +153,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
         {mentor.isAlumni && (
           <div className="absolute bottom-4 left-5 flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-[#e87315] rounded-full animate-pulse" />
-            <span className="text-[10px] sm:text-[11px] font-black text-white/90 uppercase tracking-[0.3em] italic bg-black/80 px-2.5 py-1.5 border border-white/20">ALUMNI // CLASS {mentor.gradYear}</span>
+            <span className="text-[10px] sm:text-[11px] font-black text-white/90 uppercase tracking-[0.3em] italic bg-black/80 px-2.5 py-1.5 border border-white/20">- CLASS {mentor.gradYear}</span>
           </div>
         )}
       </div>
@@ -276,7 +162,7 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl sm:text-3xl font-black text-white/90 group-hover:text-[#e87315] transition-colors leading-none uppercase italic tracking-tighter truncate">{mentor.name}</h3>
-            {mentor.rating >= 4.9 && <Sparkles size={18} className="text-[#e87315]" />}
+            {mentor.rating >= 4.9 && <Star size={18} className="text-[#e87315]" fill="currentColor" />}
           </div>
           <p className="text-[11px] sm:text-[12px] font-bold text-white/60 uppercase tracking-[0.4em] italic truncate">{mentor.role}</p>
         </div>
@@ -333,7 +219,6 @@ const MentorCard = ({ mentor, isAccepted, isPending }) => {
   );
 };
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const FindMentors = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -346,11 +231,14 @@ const FindMentors = () => {
   const [connectedMentors, setConnectedMentors] = useState(new Set());
   const [acceptedMentors, setAcceptedMentors] = useState(new Set());
 
-  // ── AI State ──────────────────────────────────────────────
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const PAGE_LIMIT = 9;
+
   const [userProjects, setUserProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [showAIPanel, setShowAIPanel] = useState(false);
-  const [aiKey, setAiKey] = useState(0); // remount panel on new project selection
+  const [aiKey, setAiKey] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -383,7 +271,6 @@ const FindMentors = () => {
     fetchData();
   }, []);
 
-  // Fetch user's own projects for the AI dropdown
   useEffect(() => {
     if (!user?._id) return;
     fetch(`/api/projects?creator=${user._id}`, { credentials: 'include' })
@@ -391,6 +278,10 @@ const FindMentors = () => {
       .then(data => setUserProjects(Array.isArray(data) ? data : data.projects || []))
       .catch(() => setUserProjects([]));
   }, [user?._id]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, activeCategory, alumniOnly]);
 
   const filteredMentors = useMemo(() => {
     if (!Array.isArray(mentors)) return [];
@@ -405,18 +296,29 @@ const FindMentors = () => {
     });
   }, [searchTerm, activeCategory, alumniOnly, mentors]);
 
+  const visibleMentors = filteredMentors.slice(0, page * PAGE_LIMIT);
+  const hasMore = visibleMentors.length < filteredMentors.length;
   const hasActiveFilters = searchTerm !== '' || activeCategory !== 'All Mentors' || alumniOnly;
 
   const clearAll = () => {
     setSearchTerm('');
     setActiveCategory('All Mentors');
     setAlumniOnly(false);
+    setPage(1);
   };
 
   const handleFindMentors = () => {
     if (!selectedProjectId) return;
-    setAiKey(prev => prev + 1); // remount to re-fetch
+    setAiKey(prev => prev + 1);
     setShowAIPanel(true);
+  };
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setPage(prev => prev + 1);
+      setLoadingMore(false);
+    }, 800);
   };
 
   if (loading) return (
@@ -433,8 +335,6 @@ const FindMentors = () => {
 
   return (
     <div className="w-full space-y-8 px-4 md:px-8 pb-16 bg-[#050505] min-h-screen text-white">
-
-      {/* ── Header Architecture ── */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 pt-10 pb-16 border-b border-white/10">
         <div className="relative">
           <div className="absolute -left-6 top-0 w-[2px] h-full bg-[#e87315] hidden md:block" />
@@ -450,7 +350,6 @@ const FindMentors = () => {
           </p>
         </div>
 
-        {/* Search Module */}
         <div className="relative w-full md:w-[450px] flex-shrink-0 group">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/40 group-hover:text-[#e87315] transition-colors z-10" size={20} strokeWidth={2.5} />
           <input
@@ -466,43 +365,36 @@ const FindMentors = () => {
         </div>
       </header>
 
-      {/* ── AI MENTOR FINDER MODULE ── */}
       {user?.role === 'student' && (
         <div className="relative border border-[#e87315]/20 bg-[#080808] overflow-hidden">
-          {/* Top accent */}
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#e87315] via-[#e87315]/30 to-transparent" />
           <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#e87315]" />
           <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-[#e87315]" />
 
           <div className="p-6 sm:p-8">
-            {/* Header */}
             <div className="flex items-center gap-4 mb-2">
               <div className="w-10 h-10 border border-[#e87315]/40 bg-[#e87315]/10 flex items-center justify-center flex-shrink-0">
-                <Sparkles size={18} className="text-[#e87315]" />
+                <Zap size={18} className="text-[#e87315]" />
               </div>
               <div>
                 <div className="flex items-center gap-3">
                   <h2 className="text-[13px] font-black text-white/90 uppercase tracking-[0.4em] italic">
                     AI Mentor Finder
                   </h2>
-                  {/* Live badge */}
                   <div className="flex items-center gap-1.5 px-2.5 py-1 border border-[#e87315]/30 bg-[#e87315]/10">
                     <span className="w-1.5 h-1.5 bg-[#e87315] rounded-full animate-pulse" />
                     <span className="text-[9px] font-black text-[#e87315] uppercase tracking-widest">Powered by Gemini</span>
                   </div>
                 </div>
                 <p className="text-[11px] font-bold text-white/50 uppercase tracking-widest mt-1">
-                  Select a project → AI scans all mentors and ranks by expertise match
+                  Select a project / AI scans all mentors and ranks by expertise match
                 </p>
               </div>
             </div>
 
-            {/* Divider */}
             <div className="h-px bg-white/10 my-5" />
 
-            {/* Controls */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
-              {/* Project selector */}
               <div className="flex-1 relative group/select">
                 <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-2 block">
                   Select Your Project
@@ -512,7 +404,7 @@ const FindMentors = () => {
                     value={selectedProjectId}
                     onChange={e => {
                       setSelectedProjectId(e.target.value);
-                      setShowAIPanel(false); // hide old results on change
+                      setShowAIPanel(false);
                     }}
                     className="w-full bg-[#0c0c0c] border border-white/20 hover:border-white/40 focus:border-[#e87315]/50 text-[11px] font-black text-white/80 uppercase tracking-wider px-4 py-4 focus:outline-none transition-all appearance-none cursor-pointer"
                   >
@@ -520,43 +412,38 @@ const FindMentors = () => {
                     {userProjects.length > 0 ? (
                       userProjects.map(p => (
                         <option key={p._id} value={p._id} className="bg-[#0c0c0c]">
-                          {p.title} — {p.category} [{p.stage}]
+                          {p.title} - {p.category} [{p.stage}]
                         </option>
                       ))
                     ) : (
-                      <option disabled className="bg-[#0c0c0c] text-white/40">No projects found — create one first</option>
+                      <option disabled className="bg-[#0c0c0c] text-white/40">No projects found - create one first</option>
                     )}
                   </select>
-                  {/* Custom arrow */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <div className="w-2 h-2 border-r border-b border-white/40 rotate-45 -translate-y-0.5" />
                   </div>
-                  {/* Corner accents */}
                   <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-white/30 group-focus-within/select:border-[#e87315]" />
                   <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-white/30 group-focus-within/select:border-[#e87315]" />
                 </div>
               </div>
 
-              {/* Find button */}
               <button
                 onClick={handleFindMentors}
                 disabled={!selectedProjectId}
                 className={`group relative flex items-center gap-3 px-8 py-4 border overflow-hidden transition-all duration-500 flex-shrink-0 ${selectedProjectId
                   ? 'border-[#e87315] bg-[#e87315]/10 text-[#e87315] hover:bg-[#e87315] hover:text-black'
                   : 'border-white/10 bg-white/[0.02] text-white/30 cursor-not-allowed'
-                }`}
+                  }`}
               >
-                {/* Hover fill */}
                 {selectedProjectId && (
                   <div className="absolute inset-0 bg-[#e87315] translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out" />
                 )}
-                <Sparkles size={16} className="relative z-10 flex-shrink-0" />
+                <Zap size={16} className="relative z-10 flex-shrink-0" />
                 <span className="text-[11px] font-black uppercase tracking-[0.4em] italic relative z-10">
                   Find AI Mentors
                 </span>
               </button>
 
-              {/* Close AI panel button */}
               {showAIPanel && (
                 <button
                   onClick={() => setShowAIPanel(false)}
@@ -573,13 +460,12 @@ const FindMentors = () => {
                 <div className="w-1 h-4 bg-[#e87315]/60" />
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
                   You need at least one project to use AI Mentor Finder.
-                  <button onClick={() => navigate('/dashboard/project/create')} className="ml-2 text-[#e87315] hover:underline">Create one →</button>
+                  <button onClick={() => navigate('/dashboard/project/create')} className="ml-2 text-[#e87315] hover:underline">Create one</button>
                 </p>
               </div>
             )}
           </div>
 
-          {/* AI Results Panel */}
           {showAIPanel && selectedProjectId && (
             <div className="border-t border-white/10">
               <AIMentorPanel
@@ -590,13 +476,11 @@ const FindMentors = () => {
             </div>
           )}
 
-          {/* Bottom corner */}
           <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#e87315]" />
           <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#e87315]" />
         </div>
       )}
 
-      {/* ── Filters Row ── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 py-6 sm:py-8 border-y border-white/10 bg-white/[0.02] px-4">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide flex-1">
           {CATEGORIES.map((cat) => (
@@ -631,26 +515,71 @@ const FindMentors = () => {
         </div>
       </div>
 
-      {/* ── Mentor Grid header ── */}
       <div className="flex items-center gap-4">
         <div className="w-[2px] h-4 bg-[#e87315]" />
         <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">
-          All Mentors — {filteredMentors.length} Found
+          All Mentors - {filteredMentors.length} Found
         </p>
       </div>
 
-      {/* ── Mentor Grid ── */}
-      {filteredMentors?.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-10">
-          {filteredMentors.map((mentor) => (
-            <MentorCard
-              key={mentor._id}
-              mentor={mentor}
-              isAccepted={acceptedMentors.has(mentor._id?.toString())}
-              isPending={connectedMentors.has(mentor._id?.toString())}
-            />
-          ))}
-        </div>
+      {visibleMentors?.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-10">
+            {visibleMentors.map((mentor) => (
+              <MentorCard
+                key={mentor._id}
+                mentor={mentor}
+                isAccepted={acceptedMentors.has(mentor._id?.toString())}
+                isPending={connectedMentors.has(mentor._id?.toString())}
+              />
+            ))}
+          </div>
+
+          {hasMore && !loading && (
+            <div className="flex justify-center pt-16 pb-24">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className={`group relative flex items-center justify-center gap-6 px-10 sm:px-12 py-5 sm:py-6 border transition-all duration-500 overflow-hidden ${loadingMore
+                  ? 'bg-white/10 border-white/20 cursor-wait'
+                  : 'bg-[#0c0c0c] border-white/20 hover:border-[#e87315] cursor-pointer'
+                  }`}
+              >
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[1px] bg-white/10" />
+
+                {loadingMore ? (
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="flex gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="w-1.5 h-3.5 bg-[#e87315] animate-pulse"
+                          style={{ animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[11px] sm:text-[12px] font-black text-[#e87315] uppercase tracking-[0.5em]">
+                      Synchronizing...
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <span className="relative z-10 text-[11px] sm:text-[12px] font-black text-white/60 group-hover:text-white uppercase tracking-[0.5em] transition-colors bg-[#0c0c0c] px-4 group-hover:bg-transparent">
+                      Fetch Next Data Batch
+                    </span>
+                    <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 bg-[#080808] group-hover:bg-[#e87315] flex items-center justify-center transition-all duration-500 border border-white/20 group-hover:border-[#e87315]">
+                      <div className="w-2.5 h-2.5 border-b-2 border-r-2 border-white/60 group-hover:border-black rotate-45 mb-1" />
+                    </div>
+                  </>
+                )}
+
+                {!loadingMore && (
+                  <div className="absolute inset-0 bg-[#e87315]/[0.05] translate-y-[101%] group-hover:translate-y-0 transition-transform duration-300" />
+                )}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="relative border border-dashed border-white/20 bg-[#0c0c0c] py-32 px-10 animate-evolve-in flex flex-col items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(#e87315_1px,transparent_1px)] bg-[size:40px_40px] opacity-[0.05] pointer-events-none" />

@@ -1,67 +1,67 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const flashModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
-/**
- * @param {Object} project  - the project document
- * @param {Array}  users    - candidate users from DB
- * @param {String} mode     - "teammate" | "mentor"
- */
-async function getAISuggestions(project, users, mode) {
+async function getEmbedding(text) {
+  const result = await embeddingModel.embedContent(text);
+  return result.embedding.values;
+}
+
+function cosineSimilarity(vecA, vecB) {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+async function generateMatchReasons(project, topCandidates, mode) {
   const isMentor = mode === "mentor";
 
-  // Build a lean user list to send (don't send full docs)
-  const userSummaries = users.map(u => ({
-    id: u._id,
-    name: u.name,
-    skills: u.skills,
-    expertise: u.expertise,        // mentors
-    category: u.category,          // mentors
-    bio: u.bio,
-    rating: u.rating,              // mentors
-    sessionsHeld: u.sessionsHeld,  // mentors
-    location: u.location,
-    college: u.college,
-    role: u.role,
+  const candidateSummaries = topCandidates.map(c => ({
+    id: c.user._id,
+    name: c.user.name,
+    skills: c.user.skills,
+    expertise: c.user.expertise,
+    bio: c.user.bio
   }));
 
   const prompt = `
-You are an AI that recommends the best ${isMentor ? "mentors" : "teammates"} for a project.
+You are an AI matching system.
 
 PROJECT DETAILS:
-- Title: ${project.title}
-- Category: ${project.category}
-- Stage: ${project.stage}
-- Description: ${project.description}
-- Tags: ${project.tags?.join(", ")}
-- Looking For: ${project.lookingFor?.join(", ")}
-- Current Team Size: ${project.teamSize}
+Title: ${project.title}
+Description: ${project.description}
+Stage: ${project.stage}
+Category: ${project.category}
+Looking For: ${project.lookingFor?.join(", ")}
 
-CANDIDATES (JSON array):
-${JSON.stringify(userSummaries, null, 2)}
+CANDIDATES:
+${JSON.stringify(candidateSummaries, null, 2)}
 
 TASK:
-Pick the TOP 5 best ${isMentor ? "mentors" : "teammates"} from the candidates.
-${isMentor
-  ? "Prioritize: matching category/expertise, high rating, experience with this project stage."
-  : "Prioritize: complementary skills the project needs, matching tech stack, similar interests."
-}
+For each candidate, write exactly ONE short sentence explaining why they are a strong ${isMentor ? "mentor" : "teammate"} match for this project.
+Focus on their skills, expertise, and how it aligns with the project stage and needs.
 
-Return ONLY a valid JSON array (no markdown, no explanation) in this format:
+Return ONLY a valid JSON array in this exact format:
 [
   {
     "userId": "<id>",
-    "name": "<name>",
-    "matchScore": <0-100>,
-    "reason": "<1 sentence why they are a great match>"
+    "reason": "<1 sentence reason>"
   }
 ]
 `;
 
-  const result = await model.generateContent(prompt);
+  const result = await flashModel.generateContent(prompt);
   const text = result.response.text().replace(/```json|```/g, "").trim();
   return JSON.parse(text);
 }
 
-module.exports = { getAISuggestions };
+module.exports = { getEmbedding, cosineSimilarity, generateMatchReasons };
