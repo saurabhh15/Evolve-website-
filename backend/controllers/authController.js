@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -102,27 +103,27 @@ exports.getMe = async (req, res, next) => {
 // COMPLETE ONBOARDING
 exports.completeOnboarding = async (req, res, next) => {
   try {
-    console.log(" ONBOARDING API HIT");
-    console.log("BODY:", req.body);
-
     const userId = req.user?.userId;
 
     if (!userId) {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    // SAFE EXTRACTION
+    // SAFE EXTRACTION - STANDARD FIELDS
     const role = req.body.role?.toLowerCase() || "student";
     const gender = req.body.gender?.toLowerCase();
-
     const college = req.body.college || "Not specified";
     const skills = Array.isArray(req.body.skills) ? req.body.skills : [];
 
-    console.log("EXTRACTED GENDER:", gender);
+    // SAFE EXTRACTION - INVESTOR SPECIFIC FIELDS
+    const firmName = req.body.firmName || "";
+    const ticketSize = req.body.ticketSize || "";
+    const sectorsOfInterest = Array.isArray(req.body.sectorsOfInterest) ? req.body.sectorsOfInterest : [];
+    const investmentThesis = req.body.investmentThesis || "";
+    const targetStages = Array.isArray(req.body.targetStages) ? req.body.targetStages : [];
 
     // FORCE IMAGE SET
     let profileImage = "";
-
     if (gender === "female") {
       profileImage = "/female.jpg";
     } else if (gender === "male") {
@@ -137,12 +138,15 @@ exports.completeOnboarding = async (req, res, next) => {
         profileImage, 
         college,
         skills,
+        firmName,
+        ticketSize,
+        sectorsOfInterest,
+        investmentThesis,
+        targetStages,
         hasCompletedOnboarding: true,
       },
       { new: true }
     ).select("-password");
-
-    console.log("UPDATED USER IN DB:", updatedUser);
 
     res.json({
       message: "Protocol Secured. Welcome to the Network.",
@@ -189,6 +193,74 @@ exports.changePassword = async (req, res, next) => {
 
   } catch (error) {
     console.error("Password Change Error:", error);
+    next(error);
+  }
+};
+
+// DELETE ACCOUNT (CASCADING SCRUB)
+exports.deleteAccount = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+
+    // 1. Find user to ensure they exist
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Dynamic model loading safely accesses your schemas without crashing if paths differ
+    const Project = mongoose.models.Project;
+    const Connection = mongoose.models.Connection;
+    const Notification = mongoose.models.Notification;
+    const Comment = mongoose.models.Comment;
+    const Application = mongoose.models.Application;
+    const Watchlist = mongoose.models.Watchlist;
+    
+
+    // 2. Delete all projects created by this user
+    // & Remove user from other people's projects (Team Members array & Likes array)
+    if (Project) {
+      await Project.deleteMany({ creator: userId });
+      await Project.updateMany(
+        {},
+        { 
+          $pull: { 
+            teamMembers: userId,
+            likes: userId 
+          } 
+        }
+      );
+    }
+    
+    // 3. Delete all network connections/requests involving this user
+    if (Connection) {
+      await Connection.deleteMany({ $or: [{ from: userId }, { to: userId }] });
+    }
+
+    // 4. Delete all notifications involving this user
+    if (Notification) {
+      await Notification.deleteMany({ $or: [{ recipient: userId }, { sender: userId }] });
+    }
+
+    // 5. Delete all comments authored by this user
+    if (Comment) {
+      await Comment.deleteMany({ author: userId });
+    }
+
+    // 6. Delete all job/role applications submitted by this user
+    if (Application) {
+      await Application.deleteMany({ applicant: userId });
+    }
+    if (Watchlist) {
+      await Watchlist.deleteMany({ investor: userId });
+    }
+
+    // 7. Finally, delete the User profile itself
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: 'Account and all associated platform data permanently deleted.' });
+  } catch (error) {
+    console.error("Cascading Delete Account Error:", error);
     next(error);
   }
 };

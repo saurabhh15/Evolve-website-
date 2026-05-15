@@ -63,6 +63,8 @@ export const projectAPI = {
     // Remove team member
     removeTeamMember: (projectId, userId) =>
         api.delete(`/projects/${projectId}/team/${userId}`),
+    
+    inviteTeammate: (projectId, userId) => api.post(`/projects/${projectId}/invite`, { userId }),
 };
 
 
@@ -207,6 +209,7 @@ export const authAPI = {
 
     // Change Password
     changePassword: (data) => api.put('/auth/change-password', data),
+    deleteAccount: () => api.delete('/auth/delete-account'),
 };
 
 // ── AI Suggestions ──────────────────────────────────────────

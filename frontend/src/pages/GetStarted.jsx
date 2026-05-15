@@ -169,8 +169,19 @@ const GetStarted = () => {
         try {
             if (isLogin) {
                 const user = await login(formData.email, formData.password);
-                if (user.hasCompletedOnboarding) navigate('/dashboard');
-                else navigate('/onboarding-protocol');
+                
+                // Role-based routing for authenticated users
+                if (user.hasCompletedOnboarding) {
+                    if (user.role === 'investor') {
+                        navigate('/investor');
+                    } else if (user.role === 'mentor') {
+                        navigate('/mentor/dashboard');
+                    } else {
+                        navigate('/dashboard');
+                    }
+                } else {
+                    navigate('/onboarding-protocol');
+                }
             } else {
                 const res = await api.post('/auth/register', {
                     name: fullName,

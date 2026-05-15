@@ -12,7 +12,7 @@ const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const Message = require("./models/Message");
 const path = require("path");
-const aiRoutes = require("./routes/ai");
+const watchlistRoutes = require('./routes/watchlistRoutes');
 
 // --- Environment Variable Checks ---
 if (!process.env.MONGO_URI || !process.env.JWT_SECRET) {
@@ -135,8 +135,9 @@ app.get("/api/health", (req, res) => {
 app.use("/api/", apiLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
-app.use("/api/ai", aiRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
+app.use('/api/ai', require('./routes/ai'));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/users", require("./routes/users"));
 app.use("/api/projects", require("./routes/projects"));
@@ -147,6 +148,8 @@ app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/learning-goals", require("./routes/learningGoals"));
 app.use("/api/notes", require("./routes/notes"));
 app.use("/api/applications", require("./routes/applications"));
+app.use("/api/pulse", require("./routes/pulseRoutes"));
+app.use("/api/feedback", require("./routes/feedbackRoutes"));
 
 
 // Catch-all 404 handler modified to pass to global error handler

@@ -7,27 +7,34 @@ const {
   login, 
   getMe, 
   completeOnboarding,
-  changePassword
+  changePassword,
+  deleteAccount
 } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 
 // Dynamic Frontend URL check
 const CLIENT_URL = process.env.FRONTEND_URL || 'http://localhost:5174';
 
-// signIn
+// User Registration
 router.post('/register', register);
-// Login
+
+// User Login
 router.post('/login', login);
+
 // Get Current User (Session check)
 router.get('/me', auth, getMe);
 
+// Complete Profile Onboarding
 router.patch('/onboarding', auth, (req, res, next) => {
-  console.log(" ROUTE HIT");
+  console.log("ROUTE HIT: /onboarding");
   next();
 }, completeOnboarding);
 
 // Change Password
 router.put('/change-password', auth, changePassword);
+
+// Delete Account
+router.delete('/delete-account', auth, deleteAccount);
 
 // GOOGLE OAuth ROUTES 
 router.get('/google', 
@@ -74,12 +81,14 @@ router.get('/github/callback',
   (req, res) => {
     console.log('GitHub callback hit, user:', req.user.email);
     
+    // Generate JWT
     const token = jwt.sign(
       { userId: req.user._id }, 
       process.env.JWT_SECRET, 
       { expiresIn: '7d' }
     );
     
+    // Redirect to dynamic frontend with token
     const needsOnboarding = !req.user.hasCompletedOnboarding;
     res.redirect(`${CLIENT_URL}/auth/callback?token=${token}&onboarding=${needsOnboarding}`);
   }

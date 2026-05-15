@@ -7,7 +7,7 @@ const User = require('../models/User');
  */
 exports.getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-password').lean(); // Optimization added here
+    const user = await User.findById(req.params.id).select('-password').lean(); 
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -29,10 +29,12 @@ exports.getUserById = async (req, res, next) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    // Fields that can be updated
+    // Fields that can be updated (Added Investor fields here)
     const allowedUpdates = [
       'name', 'bio', 'skills', 'college', 'location', 
-      'profileImage', 'linkedIn', 'github', 'website','coverImage'
+      'profileImage', 'linkedIn', 'github', 'website', 'coverImage', 
+      'mentorStatus', 'firmName', 'ticketSize', 'sectorsOfInterest', 
+      'investmentThesis', 'targetStages'
     ];
     
     // Filter out fields that shouldn't be updated
@@ -47,7 +49,7 @@ exports.updateProfile = async (req, res, next) => {
       req.user.userId,
       updates,
       { new: true, runValidators: true }
-    ).select('-password').lean(); // Optimization added here
+    ).select('-password').lean(); 
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -97,7 +99,7 @@ exports.searchUsers = async (req, res, next) => {
       .select('-password')
       .limit(50)
       .sort({ createdAt: -1 })
-      .lean(); // Optimization added here
+      .lean(); 
     
     res.json(users);
   } catch (error) {
@@ -124,9 +126,39 @@ exports.getMentors = async (req, res, next) => {
     const mentors = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .lean(); // Optimization added here
+      .lean(); 
     
     res.json(mentors);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all investors with optional sector filter
+ * @route   GET /api/users/investors?sector=AI
+ * @access  Public
+ */
+exports.getInvestors = async (req, res, next) => {
+  try {
+    const { sector } = req.query;
+    
+    let query = { role: 'investor' };
+    
+    // Filter by sector if provided
+    if (skill) {
+      query.$or = [
+        { skills: { $in: [skill] } },
+        { sectorsOfInterest: { $in: [skill] } }
+      ];
+    }
+    
+    const investors = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .lean(); 
+    
+    res.json(investors);
   } catch (error) {
     next(error);
   }
@@ -144,7 +176,7 @@ exports.getUserProjects = async (req, res, next) => {
     const projects = await Project.find({ creator: req.params.id })
       .populate('creator', 'name role')
       .sort({ createdAt: -1 })
-      .lean(); // Optimization added here
+      .lean(); 
     
     res.json(projects);
   } catch (error) {

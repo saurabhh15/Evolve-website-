@@ -64,7 +64,37 @@ const projectSchema = new mongoose.Schema({
   weeklyLikes: {
     type: Number,
     default: 0
+  },
+
+  // ─── INVESTOR & DEAL FLOW FIELDS ───
+  fundingAsk: {
+    type: Number,
+    default: 0,
+  },
+  equity: {
+    type: Number,
+    default: 0,
+  },
+  readinessScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
+  isMentorValidated: {
+    type: Boolean,
+    default: false,
+  },
+  pitchDeckUrl: {
+    type: String,
+    default: "",
+  },
+  tractionMetrics: {
+    revenue: { type: Number, default: 0 },
+    activeUsers: { type: Number, default: 0 },
+    growthRate: { type: String, default: "0%" }
   }
+
 }, {
   timestamps: true
 });

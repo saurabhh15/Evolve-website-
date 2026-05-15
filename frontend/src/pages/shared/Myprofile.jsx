@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import api, { userAPI } from '../../services/api';
+import api, { userAPI, authAPI } from '../../services/api';
 import { MapPin, X, LogOut, Save, Eye, EyeOff } from 'lucide-react';
 
 const MyProfile = () => {
@@ -45,6 +45,10 @@ const MyProfile = () => {
     const [passwordError, setPasswordError] = useState(null);
     const [passwordSuccess, setPasswordSuccess] = useState(false);
     const [passwordSaving, setPasswordSaving] = useState(false);
+
+    // Delete Account States
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -120,6 +124,20 @@ const MyProfile = () => {
     const handleLogout = () => {
         logout();
         navigate('/login');
+    };
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        try {
+            await authAPI.deleteAccount();
+            logout(); // Clears local storage and context
+            navigate('/login'); // Redirect to login
+        } catch (err) {
+            console.error("Failed to delete account:", err);
+            setError(err.response?.data?.message || 'Failed to delete account.');
+            setIsDeleting(false);
+            setShowDeleteModal(false);
+        }
     };
 
     const handleAddSkill = (e) => {
@@ -490,7 +508,7 @@ const MyProfile = () => {
                         <div className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-white/20 group-hover:bg-[#e87315] transition-colors" />
                     </div>
 
-                    {/* Mentor Settings */}
+                    {/* Mentor Settings (Only visible to mentors) */}
                     {user?.role === 'mentor' && (
                         <div className="relative bg-[#0c0c0c] p-6 sm:p-8 border border-white/10 overflow-hidden group">
                             <div className="flex items-center gap-3 mb-8 sm:mb-10 relative z-10">
@@ -543,14 +561,17 @@ const MyProfile = () => {
                                             <select
                                                 value={form.mentorStatus}
                                                 onChange={e => setForm(prev => ({ ...prev, mentorStatus: e.target.value }))}
-                                                className="w-full bg-white/[0.05] border border-white/20 px-5 py-4 text-[13px] sm:text-[14px] text-white/90 appearance-none cursor-pointer focus:outline-none focus:border-[#e87315]/50 transition-all"
+                                                className="w-full bg-white/[0.05] border border-white/20 px-5 py-4 text-[13px] sm:text-[14px] text-white/90 appearance-none cursor-pointer focus:outline-none focus:border-[#e87315]/50 transition-all uppercase tracking-widest italic"
                                             >
-                                                {['Accepting Mentees', 'Limited Capacity', 'Unavailable'].map(s => (
-                                                    <option key={s} value={s} className="bg-[#0c0c0c] text-white/90">{s}</option>
-                                                ))}
+                                                <option value="Accepting Mentees" className="bg-[#080808]">● Accepting Mentees</option>
+                                                <option value="Limited Capacity" className="bg-[#080808]">○ Limited Capacity</option>
+                                                <option value="Unavailable" className="bg-[#080808]">— Unavailable</option>
                                             </select>
                                             <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 font-black">V</div>
                                         </div>
+                                        <p className="text-[9px] text-white/30 font-medium italic tracking-widest mt-1.5">
+                                            This updates the availability badge on your public profile.
+                                        </p>
                                     </div>
 
                                     <div className="flex flex-col md:flex-row md:items-end gap-6 sm:gap-8 pt-2.5">
@@ -580,32 +601,32 @@ const MyProfile = () => {
                                             </div>
                                         )}
                                     </div>
+                                </div>
 
-                                    <div className="space-y-4 pt-5 md:col-span-2">
-                                        <label className="text-[10px] sm:text-[11px] font-black text-white/50 uppercase tracking-[0.3em]">Core Expertise</label>
-                                        <div className="flex flex-wrap gap-3 sm:gap-4">
-                                            {form.expertise.map((item, i) => (
-                                                <div key={i} className="flex items-center gap-2.5 px-4 py-2 bg-white/[0.05] border border-white/20 text-[11px] sm:text-[12px] font-bold text-white/80 uppercase tracking-wider group/tag hover:border-[#e87315]/50 transition-all">
-                                                    {item}
-                                                    <button
-                                                        onClick={() => setForm(prev => ({ ...prev, expertise: prev.expertise.filter((_, idx) => idx !== i) }))}
-                                                        className="opacity-50 hover:opacity-100 hover:text-red-500 transition-colors ml-1"
-                                                    >
-                                                        <X size={14} strokeWidth={2.5} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="relative group/input mt-4">
-                                            <input
-                                                type="text"
-                                                placeholder="Add expertise and press Enter"
-                                                value={expertiseInput}
-                                                onChange={e => setExpertiseInput(e.target.value)}
-                                                onKeyDown={handleAddExpertise}
-                                                className="w-full bg-transparent border-b border-white/20 py-4 px-2 text-[13px] sm:text-[14px] text-white/90 placeholder:text-white/40 focus:outline-none focus:border-[#e87315] transition-all font-mono italic"
-                                            />
-                                        </div>
+                                <div className="space-y-4 pt-5 md:col-span-2">
+                                    <label className="text-[10px] sm:text-[11px] font-black text-white/50 uppercase tracking-[0.3em]">Core Expertise</label>
+                                    <div className="flex flex-wrap gap-3 sm:gap-4">
+                                        {form.expertise.map((item, i) => (
+                                            <div key={i} className="flex items-center gap-2.5 px-4 py-2 bg-white/[0.05] border border-white/20 text-[11px] sm:text-[12px] font-bold text-white/80 uppercase tracking-wider group/tag hover:border-[#e87315]/50 transition-all">
+                                                {item}
+                                                <button
+                                                    onClick={() => setForm(prev => ({ ...prev, expertise: prev.expertise.filter((_, idx) => idx !== i) }))}
+                                                    className="opacity-50 hover:opacity-100 hover:text-red-500 transition-colors ml-1"
+                                                >
+                                                    <X size={14} strokeWidth={2.5} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="relative group/input mt-4">
+                                        <input
+                                            type="text"
+                                            placeholder="Add expertise and press Enter"
+                                            value={expertiseInput}
+                                            onChange={e => setExpertiseInput(e.target.value)}
+                                            onKeyDown={handleAddExpertise}
+                                            className="w-full bg-transparent border-b border-white/20 py-4 px-2 text-[13px] sm:text-[14px] text-white/90 placeholder:text-white/40 focus:outline-none focus:border-[#e87315] transition-all font-mono italic"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -615,9 +636,8 @@ const MyProfile = () => {
                         </div>
                     )}
 
-                    {/* Change Password — buttery smooth animated grid section */}
+                    {/* Change Password */}
                     <div className="relative bg-[#0c0c0c] p-6 sm:p-8 border border-white/10 group">
-                        {/* Header — always visible, clickable */}
                         <div
                             className="flex items-center justify-between relative z-10 cursor-pointer select-none"
                             onClick={() => setShowPasswordSection(!showPasswordSection)}
@@ -629,7 +649,6 @@ const MyProfile = () => {
                                 </h2>
                             </div>
 
-                            {/* Show/Hide passwords toggle — only visible when section is open */}
                             <div className={`transition-opacity duration-300 ${showPasswordSection ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                                 <button
                                     onClick={(e) => {
@@ -644,7 +663,6 @@ const MyProfile = () => {
                             </div>
                         </div>
 
-                        {/* Smooth animated content wrapper */}
                         <div
                             className={`grid transition-all duration-500 ease-in-out ${showPasswordSection ? 'grid-rows-[1fr] opacity-100 mt-8 sm:mt-10' : 'grid-rows-[0fr] opacity-0 mt-0'
                                 }`}
@@ -778,23 +796,90 @@ const MyProfile = () => {
                     {/* Danger Zone */}
                     <div className="bg-red-500/[0.05] border border-red-500/30 rounded-2xl p-6 sm:p-8 mt-12 sm:mt-16">
                         <h2 className="text-[11px] sm:text-[12px] font-black text-red-500/90 uppercase tracking-widest mb-5 sm:mb-6">Danger Zone</h2>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 sm:gap-6">
-                            <div>
-                                <p className="text-[14px] sm:text-[15px] font-bold text-white/90 mb-1">Log Out</p>
-                                <p className="text-[11px] sm:text-[12px] text-white/60">Sign out of your account on this device.</p>
+                        
+                        <div className="flex flex-col gap-6">
+                            {/* Logout Row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-red-500/10 pb-6">
+                                <div>
+                                    <p className="text-[14px] sm:text-[15px] font-bold text-white/90 mb-1">Log Out</p>
+                                    <p className="text-[11px] sm:text-[12px] text-white/60">Sign out of your account on this device.</p>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex justify-center items-center gap-2 w-full sm:w-auto px-6 py-3 bg-red-500/10 hover:bg-red-500 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
+                                >
+                                    <LogOut size={16} />
+                                    Logout
+                                </button>
                             </div>
-                            <button
-                                onClick={handleLogout}
-                                className="flex justify-center items-center gap-2 w-full sm:w-auto px-6 py-3.5 sm:py-3 bg-red-500/10 hover:bg-red-500 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-white rounded-xl text-[11px] sm:text-[12px] font-black uppercase tracking-widest transition-all"
-                            >
-                                <LogOut size={16} className="sm:w-[18px] sm:h-[18px]" />
-                                Logout
-                            </button>
+
+                            {/* Delete Account Row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-[14px] sm:text-[15px] font-bold text-white/90 mb-1">Delete Account</p>
+                                    <p className="text-[11px] sm:text-[12px] text-white/60">Permanently delete your profile, projects, and data.</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    className="flex justify-center items-center gap-2 w-full sm:w-auto px-6 py-3 bg-transparent hover:bg-red-500 border border-red-500/30 hover:border-red-500 text-red-500 hover:text-white rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
+                                >
+                                    <X size={16} />
+                                    Delete Account
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                 </div>
             </div>
+
+            {/* DELETE ACCOUNT CONFIRMATION MODAL */}
+            {showDeleteModal && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#050505]/95 backdrop-blur-md"
+                    onClick={() => setShowDeleteModal(false)}
+                >
+                    <div 
+                        className="relative bg-[#0a0a0a] border border-red-500/30 w-full max-w-md overflow-hidden shadow-2xl p-8"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-red-500 to-transparent" />
+                        
+                        <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mb-6">
+                            <X size={24} className="text-red-500" />
+                        </div>
+
+                        <h3 className="text-2xl font-black italic uppercase text-white mb-2">Delete Account?</h3>
+                        <p className="text-[13px] text-white/60 leading-relaxed mb-8">
+                            This action is <span className="text-red-400 font-bold">irreversible</span>. Your profile, connections, and all associated data will be permanently wiped from the Evolve network.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                disabled={isDeleting}
+                                className="flex-1 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/50 hover:text-white border border-white/10 hover:bg-white/5 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={isDeleting}
+                                className="flex-1 py-4 bg-red-500/10 border border-red-500/50 hover:bg-red-500 text-red-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2"
+                            >
+                                {isDeleting ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    'Confirm Delete'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

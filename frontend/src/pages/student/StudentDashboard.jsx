@@ -11,6 +11,7 @@ import ConnectionRequests from '../../components/dashboard/ConnectionRequests';
 import ExplorePreview from '../../components/dashboard/ExplorePreview';
 import RecentMessages from '../../components/dashboard/RecentMessages';
 import Eventscard from '../../components/shared/Events-card';
+import QuickPulsePost from '../../components/dashboard/QuickPulsePost';
 
 const StudentDashboard = () => {
 
@@ -44,7 +45,7 @@ const StudentDashboard = () => {
   return (
     <div className="w-full space-y-8 px-4 md:px-8 pb-10">
 
-      {/* ── NEW HERO BANNER: Hover Tilt Graphic + Text ── */}
+      {/* ── HERO BANNER ── */}
       <header
         className="relative w-full rounded-[0.5rem] bg-[#0c0c0c] border border-white/10 overflow-hidden animate-evolve-in flex flex-col md:flex-row items-center justify-between p-8 md:p-12 mb-2 shadow-2xl"
         style={{ animationDelay: '0s' }}
@@ -121,6 +122,20 @@ const StudentDashboard = () => {
         <StatsOverview />
       </div>
 
+      {/* ── Quick Pulse Post Widget ── */}
+      <div className="animate-evolve-in" style={{ animationDelay: '0.12s' }}>
+        {/* Section label */}
+        <div className="flex items-center gap-3 mb-3">
+          <span className="w-1 h-1 bg-[#e87315] rotate-45" />
+          <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.35em]">
+            Pulse — Quick Post
+          </p>
+          <div className="flex-1 h-px bg-white/[0.04]" />
+        </div>
+        <QuickPulsePost />
+      </div>
+
+      {/* ── Main Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8 space-y-8">
           <div className="animate-evolve-in" style={{ animationDelay: '0.18s' }}><ProjectsGrid /></div>
@@ -131,7 +146,7 @@ const StudentDashboard = () => {
           <div className="animate-evolve-in" style={{ animationDelay: '0.21s' }}><ExplorePreview /></div>
         </div>
       </div>
-      
+
       {/* ── ALUMNI & EVENTS BLOCK ── */}
       <div className="grid grid-cols-1 lg:grid-cols-9 gap-8 items-start">
         <div className="animate-evolve-in lg:col-span-6" style={{ animationDelay: '0.28s' }}>
@@ -141,7 +156,7 @@ const StudentDashboard = () => {
           <Eventscard />
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         <div className="animate-evolve-in" style={{ animationDelay: '0.32s' }}><SkillsProgress /></div>
         <div className="animate-evolve-in" style={{ animationDelay: '0.36s' }}><RecentMessages /></div>

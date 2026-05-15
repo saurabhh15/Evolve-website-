@@ -4,6 +4,7 @@ import ScrollToTop from './components/ScrollToTop';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import useLenis from './hooks/useLenis';
+
 // Lazy loading all route components to significantly improve initial page load speed
 const Landing = lazy(() => import('./pages/Landing'));
 const Onboarding = lazy(() => import("./pages/Onboarding.jsx"));
@@ -37,16 +38,27 @@ function App() {
             <Route path="/Contact" element={<Contact />} />
             <Route path="/Events" element={<Events />} />
           </Route>
+          
           <Route element={<ProtectedRoute />}>
             <Route path="/onboarding-protocol" element={<Onboarding />} />
-            {/* The asterisk (*) tell everything  start with dashboard should handle by Dashboard component */}
+            
+            {/* --- STUDENT ROUTES --- */}
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="/dashboard/mentor/:id" element={<MentorProfile />} />
             <Route path="/dashboard/project/:id" element={<ProjectDetail />} />
             <Route path="/dashboard/user/:id" element={<StudentProfile />} />
             <Route path="/dashboard/notifications" element={<Notifications />} />
             <Route path="/dashboard/events" element={<Events />} />
+
+            {/* --- INVESTOR ROUTES --- */}
+            <Route path="/investor/*" element={<Dashboard />} />
+            <Route path="/investor/mentor/:id" element={<MentorProfile />} />
+            <Route path="/investor/project/:id" element={<ProjectDetail />} />
+            <Route path="/investor/user/:id" element={<StudentProfile />} />
+            <Route path="/investor/notifications" element={<Notifications />} />
+            <Route path="/investor/events" element={<Events />} />
           </Route>
+          
           <Route path="/auth/callback" element={<AuthCallback />} />
         </Routes>
       </Suspense>

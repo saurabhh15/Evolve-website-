@@ -15,12 +15,12 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false, // Made false to support Google/GitHub OAuth flawlessly
       minlength: 6,
     },
     role: {
       type: String,
-      enum: ["student", "mentor", "investor"],
+      enum: ["student", "mentor", "investor", "unassigned"], // Added unassigned for OAuth flow
       default: null,
       lowercase: true,
       index: true,
@@ -100,6 +100,34 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Accepting Mentees", "Limited Capacity", "Unavailable"],
       default: "Accepting Mentees",
+    },
+
+    // ─── INVESTOR SPECIFIC FIELDS ───
+    firmName: {
+      type: String,
+      default: "",
+    },
+    ticketSize: {
+      type: String,
+      default: "", // e.g., "$10k - $50k" or "$250k+"
+    },
+    sectorsOfInterest: {
+      type: [String],
+      default: [], // e.g., ["AI", "SaaS", "FinTech"]
+    },
+    investmentThesis: {
+      type: String,
+      default: "", // e.g., "Impact-driven", "Pure ROI"
+    },
+    targetStages: {
+      type: [String],
+      default: [], // e.g., ["Idea", "MVP", "Revenue"]
+    },
+    
+    embedding: {
+      type: [Number],
+      default: [],
+      select: false  // don't send to frontend
     },
   },
   {

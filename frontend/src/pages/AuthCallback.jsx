@@ -22,13 +22,20 @@ const AuthCallback = () => {
                 // Fetch user data
                 try {
                     const res = await api.get('/auth/me');
-                    setUser(res.data);
+                    const user = res.data;
+                    setUser(user);
 
-                    // Redirect based on onboarding status
+                    // Redirect based on onboarding status and role
                     if (needsOnboarding) {
                         navigate('/onboarding-protocol');
                     } else {
-                        navigate('/dashboard');
+                        if (user.role === 'investor') {
+                            navigate('/investor');
+                        } else if (user.role === 'mentor') {
+                            navigate('/mentor/dashboard');
+                        } else {
+                            navigate('/dashboard');
+                        }
                     }
                 } catch (err) {
                     console.error('Failed to fetch user:', err);

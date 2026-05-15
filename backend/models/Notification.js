@@ -16,13 +16,19 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: [
+      // Standard Features
       'comment',
       'connection_request',
       'connection_accepted',
       'project_like',
       'new_application',
       'application_accepted',
-      'application_rejected'
+      'application_rejected',
+      // Investor, Mentor, and Team Features
+      'project_invite',
+      'investor_interest',
+      'deal_room_update',
+      'milestone_reached'
     ],
     required: true
   },

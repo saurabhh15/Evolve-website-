@@ -56,8 +56,8 @@ exports.sendConnectionRequest = async (req, res) => {
 
     await connection.save();
 
-    // Populate user details before sending response
-    await connection.populate('from to', 'name role profileImage');
+    // Populate user details including investor fields before sending response
+    await connection.populate('from to', 'name role profileImage firmName ticketSize');
 
     io.to(to.toString()).emit('connection_request_received', {
       _id: connection._id,
@@ -109,8 +109,8 @@ exports.getMyConnections = async (req, res, next) => {
     }
 
     const connections = await Connection.find(query)
-      .populate('from', 'name role profileImage college')
-      .populate('to', 'name role profileImage college')
+      .populate('from', 'name role profileImage college bio firmName ticketSize')
+      .populate('to', 'name role profileImage college bio firmName ticketSize')
       .populate('projectId', 'title category')
       .sort({ createdAt: -1 });
 
@@ -132,7 +132,7 @@ exports.getReceivedRequests = async (req, res, next) => {
       to: req.user.userId,
       status: 'pending'
     })
-      .populate('from', 'name role profileImage college bio')
+      .populate('from', 'name role profileImage college bio firmName ticketSize')
       .populate('projectId', 'title category')
       .sort({ createdAt: -1 });
 
@@ -153,7 +153,7 @@ exports.getSentRequests = async (req, res, next) => {
     const connections = await Connection.find({
       from: req.user.userId
     })
-      .populate('to', 'name role profileImage college')
+      .populate('to', 'name role profileImage college bio firmName ticketSize')
       .populate('projectId', 'title category')
       .sort({ createdAt: -1 });
 
@@ -212,7 +212,7 @@ exports.updateConnectionStatus = async (req, res) => {
     }
 
     // Populate before sending response
-    await connection.populate('from to', 'name role profileImage');
+    await connection.populate('from to', 'name role profileImage firmName');
 
     res.json(connection);
 
@@ -265,8 +265,8 @@ exports.getNetwork = async (req, res, next) => {
       ],
       status: 'accepted'
     })
-      .populate('from', 'name role profileImage college skills')
-      .populate('to', 'name role profileImage college skills')
+      .populate('from', 'name role profileImage college skills firmName ticketSize sectorsOfInterest')
+      .populate('to', 'name role profileImage college skills firmName ticketSize sectorsOfInterest')
       .sort({ updatedAt: -1 });
 
     // Transform to get just the connected users (deduplicated)

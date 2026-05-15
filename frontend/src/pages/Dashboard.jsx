@@ -5,6 +5,8 @@ import StudentLayout from '../layouts/StudentLayout';
 import StudentDashboard_main from './student/StudentDashboard-main';
 import MentorLayout from '../layouts/MentorLayout';
 import MentorMain from './mentor/MentorDashboard-main';
+import InvestorLayout from '../layouts/InvestorLayout';
+import InvestorDashboard_main from './investor/InvestorDashboard_main';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -20,9 +22,9 @@ const Dashboard = () => {
   const role = user?.role?.toLowerCase();
 
   // We derive the activeTab directly from the URL path
-  // Example: "/dashboard/explore" becomes "explore"
+  // Added base paths for mentor and investor to default to 'home'
   const currentPath = location.pathname.split('/').pop();
-  const activeTab = currentPath === 'dashboard' ? 'home' : currentPath;
+  const activeTab = (currentPath === 'dashboard' || currentPath === 'investor' || currentPath === 'mentor') ? 'home' : currentPath;
 
   if (role === 'student') {
     return (
@@ -37,6 +39,14 @@ const Dashboard = () => {
       <MentorLayout activeTab={activeTab}>
         <MentorMain activeTab={activeTab} />
       </MentorLayout>
+    );
+  }
+
+  if (role === 'investor') {
+    return (
+      <InvestorLayout activeTab={activeTab}>
+        <InvestorDashboard_main activeTab={activeTab} />
+      </InvestorLayout>
     );
   }
 

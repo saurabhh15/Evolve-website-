@@ -20,7 +20,14 @@ const connectionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['mentor-request', 'investor-interest', 'cofounder-request', 'peer-request'],
+    enum: [
+      'mentor-request', 
+      'investor-interest', 
+      'investor-request', 
+      'cofounder-request', 
+      'peer-request', 
+      'networking'
+    ],
     required: true
   },
   status: {

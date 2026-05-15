@@ -64,6 +64,7 @@ exports.getAllProjects = async (req, res, next) => {
     next(error);
   }
 };
+
 /**
  * @desc    Search and filter projects
  * @route   GET /api/projects/search?category=AI/ML&stage=mvp&search=blockchain
@@ -111,6 +112,38 @@ exports.searchProjects = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .limit(100)
       .lean(); // Optimization added here
+
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get highly rated projects for Investor Deal Flow
+ * @route   GET /api/projects/pipeline
+ * @access  Private
+ */
+exports.getVenturePipeline = async (req, res, next) => {
+  try {
+    // Only show projects that are MVP or Launched, or have a readiness score >= 50
+    // and that are specifically looking for an investor
+    const projects = await Project.find({
+      $and: [
+        { lookingFor: { $in: ['investor'] } },
+        {
+          $or: [
+            { stage: { $in: ['mvp', 'launched'] } },
+            { readinessScore: { $gte: 50 } },
+            { isMentorValidated: true }
+          ]
+        }
+      ]
+    })
+      .populate('creator', 'name role profileImage')
+      .sort({ readinessScore: -1, createdAt: -1 })
+      .limit(20) // Limit to top 20 for pipeline feed
+      .lean();
 
     res.json(projects);
   } catch (error) {
@@ -169,7 +202,12 @@ exports.updateProject = async (req, res, next) => {
     // Fields that can be updated
     const allowedUpdates = [
       'title', 'tagline', 'description', 'category', 'stage',
-      'teamSize', 'lookingFor', 'tags', 'demoUrl', 'githubUrl', 'images'
+      'teamSize', 'lookingFor', 'tags', 'demoUrl', 'githubUrl', 'images',
+      // Added investor fields
+      'fundingAsk', 'equity', 'pitchDeckUrl', 'tractionMetrics', 
+      // Note: readinessScore and isMentorValidated should ideally be updated 
+      // by mentors/admins via a different logic, but leaving them open for testing
+      'readinessScore', 'isMentorValidated'
     ];
 
     // Apply updates
@@ -359,6 +397,65 @@ exports.removeTeamMember = async (req, res, next) => {
     await project.save();
 
     res.json({ message: 'Team member removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Invite a user to join the project team
+ * @route   POST /api/projects/:id/invite
+ * @access  Private (Only creator)
+ */
+exports.inviteTeammate = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required to send an invite' });
+    }
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // 1. Verify the person sending the invite is actually the creator
+    if (project.creator.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to invite users to this project' });
+    }
+
+    // 2. Prevent inviting someone who is already on the team
+    if (project.teamMembers.includes(userId) || project.creator.toString() === userId) {
+      return res.status(400).json({ message: 'User is already on the team' });
+    }
+
+    // 3. Prevent spamming (Check if an invite was already sent recently)
+    const existingNotif = await Notification.findOne({
+      recipient: userId,
+      sender: req.user.userId,
+      project: project._id,
+      type: 'project_invite'
+    });
+
+    if (existingNotif) {
+      return res.status(400).json({ message: 'Invitation already sent to this user' });
+    }
+
+    // 4. Create the formal notification
+    const notif = await Notification.create({
+      recipient: userId,
+      sender: req.user.userId,
+      type: 'project_invite',
+      project: project._id,
+      message: `invited you to join their project "${project.title}"`
+    });
+
+    // 5. Emit real-time socket event so the student sees it instantly
+    io.to(userId.toString()).emit('notification_received', notif);
+
+    res.json({ success: true, message: 'Invitation sent successfully!' });
   } catch (error) {
     next(error);
   }

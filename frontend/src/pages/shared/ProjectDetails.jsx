@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { projectAPI, connectionAPI, commentAPI, applicationAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../services/socket';
-import { Heart, Eye, Users, ArrowLeft, ExternalLink, Send, Pencil, Trash2, Zap } from 'lucide-react';
+import { Heart, Eye, Users, ArrowLeft, ExternalLink, Send, Pencil, Trash2, Zap, X } from 'lucide-react';
 import AISuggestionCard from '../../components/shared/AISuggestionCard';
 
 const ProjectDetail = () => {
@@ -106,7 +107,10 @@ const ProjectDetail = () => {
         }
     }, [showRoleSelector]);
 
-    const isOwnProject = project?.creator?._id === user?._id;
+    // ✨ BUG FIX: Bulletproof ID comparison logic to ensure it evaluates to TRUE
+    const isOwnProject = project && user && 
+        (project.creator?._id?.toString() === user._id?.toString() || 
+         project.creator?.toString() === user._id?.toString());
 
     useEffect(() => {
         if (activeSection !== 'Applications' || !isOwnProject) return;
@@ -247,12 +251,18 @@ const ProjectDetail = () => {
         setLoadingAITeammates(true);
         setShowAITeammates(true);
         try {
-            const res = await fetch(`/api/ai/suggest-teammates/${id}`, {
-                method: 'POST',
-                credentials: 'include'
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const baseURL = isLocalhost ? 'http://localhost:5000' : 'https://evolve-website.onrender.com';
+            const token = localStorage.getItem('token');
+
+            const res = await axios.post(`${baseURL}/api/ai/suggest-teammates/${id}`, {}, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                withCredentials: true
             });
-            const data = await res.json();
-            setAiTeammates(data.suggestions || []);
+            setAiTeammates(res.data.suggestions || []);
         } catch (err) {
             console.error("Failed to fetch AI teammates", err);
         } finally {
@@ -596,30 +606,53 @@ const ProjectDetail = () => {
                                                     Find Teammates
                                                 </h3>
                                             </div>
-                                            <button
-                                                onClick={handleFindAITeammates}
-                                                className="flex items-center gap-2 px-6 py-3 bg-[#e87315]/10 border border-[#e87315]/30 text-[#e87315] hover:bg-[#e87315] hover:text-black transition-all text-[10px] font-black uppercase tracking-[0.3em]"
-                                            >
-                                                <Zap size={14} />
-                                                AI Match
-                                            </button>
+                                            <div className="flex items-center gap-3">
+                                                {showAITeammates && (
+                                                    <button
+                                                        onClick={() => setShowAITeammates(false)}
+                                                        className="flex items-center gap-2 px-4 py-2 border border-white/10 hover:border-red-500/30 hover:bg-red-500/[0.08] text-white/40 hover:text-red-400 transition-all text-[9px] font-black uppercase tracking-widest"
+                                                    >
+                                                        <X size={14} /> Clear
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={handleFindAITeammates}
+                                                    className="flex items-center gap-2 px-6 py-3 bg-[#e87315]/10 border border-[#e87315]/30 text-[#e87315] hover:bg-[#e87315] hover:text-black transition-all text-[10px] font-black uppercase tracking-[0.3em]"
+                                                >
+                                                    <Zap size={14} />
+                                                    {showAITeammates ? 'Refresh Match' : 'AI Match'}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {showAITeammates && (
                                             <div className="space-y-6">
                                                 {loadingAITeammates ? (
-                                                    <div className="flex flex-col items-center justify-center py-12 gap-4 border border-dashed border-white/10 bg-white/[0.01]">
-                                                        <div className="w-8 h-8 border-2 border-[#e87315]/20 border-t-[#e87315] rounded-full animate-spin" />
-                                                        <p className="text-[10px] font-black text-[#e87315] uppercase tracking-[0.4em] animate-pulse">Scanning Candidates...</p>
+                                                    <div className="flex flex-col items-center justify-center py-24 gap-6 border border-white/5 bg-white/[0.01]">
+                                                        <div className="relative w-16 h-16">
+                                                            <div className="absolute inset-0 border border-[#e87315]/15 animate-ping" style={{ animationDuration: '2s' }} />
+                                                            <div className="absolute inset-0 border-2 border-t-[#e87315] border-r-[#e87315]/20 border-b-[#e87315]/10 border-l-[#e87315]/30 rounded-full animate-spin" />
+                                                            <div className="absolute inset-[5px] border border-[#e87315]/20 rotate-45 animate-pulse" />
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <Zap size={16} className="text-[#e87315]/60" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-center space-y-2">
+                                                            <p className="text-[12px] font-black text-[#e87315] uppercase tracking-[0.5em] italic animate-pulse">Running AI Vectors...</p>
+                                                            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Scanning candidates & computing alignment</p>
+                                                        </div>
                                                     </div>
                                                 ) : aiTeammates.length > 0 ? (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="flex flex-col gap-6">
                                                         {aiTeammates.map((s, i) => (
-                                                            <AISuggestionCard key={i} suggestion={s} type="teammate" />
+                                                            <AISuggestionCard key={i} suggestion={s} type="teammate" projectId={id} />
                                                         ))}
                                                     </div>
                                                 ) : (
-                                                    <p className="text-[10px] text-white/40 uppercase tracking-widest text-center py-8">No AI matches found.</p>
+                                                    <div className="text-center py-24 border border-dashed border-white/10 bg-white/[0.01]">
+                                                        <p className="text-[12px] font-black text-white/50 uppercase tracking-[0.5em] italic">No Strong AI Matches</p>
+                                                        <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mt-3">Try editing your project looking for tags</p>
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -1207,7 +1240,7 @@ const ProjectDetail = () => {
                                     </p>
                                 </div>
                                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/10" />
-                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/10" />
+                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-white/10" />
                             </div>
                         )}
                     </div>
